@@ -1,8 +1,15 @@
 import type { Metadata } from 'next';
+import ExportedImage from '@/components/ExportedImage';
 import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
-import { groupWorkshop, privateLessons, workshopTypes } from '@/lib/data';
+import {
+  groupWorkshop,
+  privateLessons,
+  workshopBannerImage,
+  workshopImage,
+  workshopTypes,
+} from '@/lib/data';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -49,19 +56,35 @@ export default function WorkshopsPage() {
       <JsonLd data={serviceJsonLd} />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
-        <FadeIn
-          as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
-        >
-          Workshops
-        </FadeIn>
-        <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
-          Come and play
-        </FadeIn>
-        <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
-          First time with a hoop, or after something more advanced? Sessions are relaxed and
-          low-pressure. No experience or coordination needed, and no pressure to be good at it.
-        </FadeIn>
+        <div className="grid gap-10 md:grid-cols-[1fr_0.85fr] md:items-center">
+          <div className="order-2 md:order-1">
+            <FadeIn
+              as="p"
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+            >
+              Workshops
+            </FadeIn>
+            <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
+              Come and play
+            </FadeIn>
+            <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
+              First time with a hoop, or after something more advanced? Sessions are relaxed and
+              low-pressure. No experience or coordination needed, and no pressure to be good at it.
+            </FadeIn>
+          </div>
+
+          <FadeIn className="order-1 md:order-2">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-sand">
+              <ExportedImage
+                src={workshopImage}
+                alt="A group hula hoop workshop in full flow, everyone spinning hoops together in a colourfully lit studio"
+                fill
+                sizes="(min-width: 768px) 480px, 100vw"
+                className="object-cover"
+              />
+            </div>
+          </FadeIn>
+        </div>
 
         {/* Workshop types */}
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -76,8 +99,21 @@ export default function WorkshopsPage() {
         </div>
       </section>
 
+      {/* Atmosphere banner */}
+      <FadeIn className="mx-auto max-w-6xl px-6 sm:px-8">
+        <div className="relative aspect-[16/7] overflow-hidden rounded-3xl bg-sand">
+          <ExportedImage
+            src={workshopBannerImage}
+            alt="A smiling participant with arms open during a relaxed Flowsha hoop workshop"
+            fill
+            sizes="(min-width: 1152px) 1088px, 100vw"
+            className="object-cover"
+          />
+        </div>
+      </FadeIn>
+
       {/* Pricing */}
-      <section className="bg-sand px-6 py-16 sm:px-8">
+      <section className="mt-16 bg-sand px-6 py-16 sm:px-8">
         <div className="mx-auto max-w-5xl">
           <FadeIn as="h2" className="mb-8 text-center font-display text-[clamp(1.8rem,5vw,2.8rem)]">
             Pricing

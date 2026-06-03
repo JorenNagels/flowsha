@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import ExportedImage from 'next-image-export-optimizer';
+import ExportedImage from '@/components/ExportedImage';
 import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';

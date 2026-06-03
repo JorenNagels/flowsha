@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import ExportedImage from '@/components/ExportedImage';
 import FadeIn from '@/components/FadeIn';
 import ContactForm from '@/components/ContactForm';
+import { contactImage } from '@/lib/data';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -30,6 +32,18 @@ export default function ContactPage() {
           {siteConfig.email}
         </a>
         .
+      </FadeIn>
+
+      <FadeIn className="mb-10">
+        <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-sand">
+          <ExportedImage
+            src={contactImage}
+            alt="Two people learning to spin hoops side by side under teal and purple studio lighting"
+            fill
+            sizes="(min-width: 768px) 768px, 100vw"
+            className="object-cover"
+          />
+        </div>
       </FadeIn>
 
       <FadeIn>

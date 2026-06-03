@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import ExportedImage from '@/components/ExportedImage';
 import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
-import { shopCategories } from '@/lib/data';
+import { shopCategories, shopImage } from '@/lib/data';
 import { siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -30,19 +31,35 @@ export default function ShopPage() {
       <JsonLd data={itemListJsonLd} />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
-        <FadeIn
-          as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
-        >
-          Hoop Shop
-        </FadeIn>
-        <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
-          Handmade hoops
-        </FadeIn>
-        <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
-          Every hoop is made by hand. If you’re not sure what you need, tell me your height and what
-          you want to do with it and I’ll point you to the right one.
-        </FadeIn>
+        <div className="grid gap-10 md:grid-cols-[1fr_0.85fr] md:items-center">
+          <div className="order-2 md:order-1">
+            <FadeIn
+              as="p"
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+            >
+              Hoop Shop
+            </FadeIn>
+            <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
+              Handmade hoops
+            </FadeIn>
+            <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
+              Every hoop is made by hand. If you’re not sure what you need, tell me your height and
+              what you want to do with it and I’ll point you to the right one.
+            </FadeIn>
+          </div>
+
+          <FadeIn className="order-1 md:order-2">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-sand">
+              <ExportedImage
+                src={shopImage}
+                alt="A hooper smiling as a hoop spins around their hand in a bright, sunlit room"
+                fill
+                sizes="(min-width: 768px) 480px, 100vw"
+                className="object-cover"
+              />
+            </div>
+          </FadeIn>
+        </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {shopCategories.map((c) => (

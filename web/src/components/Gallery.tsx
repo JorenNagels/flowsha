@@ -1,4 +1,4 @@
-import ExportedImage from 'next-image-export-optimizer';
+import ExportedImage from '@/components/ExportedImage';
 import DragScroll from './DragScroll';
 import { galleryImages } from '@/lib/data';
 

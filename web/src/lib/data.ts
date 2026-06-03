@@ -14,6 +14,12 @@ export const navLinks: NavLink[] = [
 export const heroImage = '/images/gallery/hoop-08.jpg';
 export const aboutImage = '/images/gallery/hoop-19.jpg';
 
+// Per-page feature images to break up the text-heavy pages.
+export const workshopImage = '/images/gallery/hoop-10.jpg';
+export const workshopBannerImage = '/images/gallery/hoop-04.jpg';
+export const shopImage = '/images/gallery/hoop-03.jpg';
+export const contactImage = '/images/gallery/hoop-01.jpg';
+
 export type GalleryImage = { src: string; alt: string };
 
 export const galleryImages: GalleryImage[] = [

@@ -1,4 +1,4 @@
-import ExportedImage from 'next-image-export-optimizer';
+import ExportedImage from '@/components/ExportedImage';
 import FadeIn from './FadeIn';
 import CtaButton from './CtaButton';
 import { heroImage } from '@/lib/data';
