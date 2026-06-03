@@ -1,0 +1,55 @@
+// Central site configuration. Swap the placeholders (domain, socials, email) here.
+export const siteConfig = {
+  name: 'Flowsha',
+  founder: 'Osha',
+  // Placeholder domain — no domain bought yet. Swap before launch.
+  url: 'https://flowsha.co.uk',
+  tagline: 'Find your flow',
+  subtagline: 'Play • Flow • Connect',
+  offerings: 'Classes • Performances • Handmade Hoops',
+  description:
+    'Hula hoop workshops, performances and handmade hoops with Osha of Flowsha in Southampton, Hampshire. Relaxed, beginner-friendly classes, LED & fire performance booking, and custom hoops across Southampton and the South of England. Find your flow.',
+  // Placeholder contact + socials — replace before launch.
+  email: 'hello@flowsha.co.uk',
+  // Local SEO — based in Southampton, serving Hampshire & the South.
+  // Human-readable label (used in Footer copy + as a fallback in metadata).
+  areaServed: 'Southampton & Hampshire',
+  // Structured catchment for JSON-LD `areaServed`. Southampton first (the open
+  // lane — no city-based hooping rival), then the surrounding towns where the
+  // nearest competitors trade (Romsey, Winchester, Bournemouth/Dorset).
+  areaServedTowns: [
+    'Southampton',
+    'Eastleigh',
+    'Romsey',
+    'Winchester',
+    'Fareham',
+    'Portsmouth',
+    'Bournemouth',
+  ],
+  // Topics for `knowsAbout` — reinforces the niche to search engines.
+  knowsAbout: [
+    'Hula hoop classes',
+    'Hoop dance',
+    'Flow arts',
+    'Fire hoop performance',
+    'LED hoop performance',
+    'Handmade hula hoops',
+  ],
+  // Rough guide for the `priceRange` field (£ = budget, ££ = mid).
+  priceRange: '££',
+  location: {
+    city: 'Southampton',
+    region: 'Hampshire',
+    country: 'United Kingdom',
+    countryCode: 'GB',
+    // Approx Southampton city-centre coordinates for LocalBusiness geo.
+    latitude: 50.9097,
+    longitude: -1.4044,
+  },
+  socials: {
+    instagram: 'https://www.instagram.com/flowshahoops',
+    facebook: 'https://www.facebook.com/flowshahoops',
+  },
+} as const;
+
+export const ogImage = '/images/og/flowsha-og.jpg';

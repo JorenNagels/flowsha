@@ -1,0 +1,22 @@
+{
+  "name": "flowsha-hoops",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "web",
+    "lambda",
+    "infrastructure"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w web",
+    "dev:api": "npm run dev -w lambda",
+    "build": "npm run build -w web",
+    "prep-images": "node scripts/prep-images.mjs",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "sharp": "^0.33.5"
+  }
+}

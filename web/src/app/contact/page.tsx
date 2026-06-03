@@ -1,0 +1,42 @@
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import FadeIn from '@/components/FadeIn';
+import ContactForm from '@/components/ContactForm';
+import { siteConfig } from '@/lib/site';
+
+export const metadata: Metadata = {
+  title: 'Contact & Booking',
+  description:
+    'Get in touch with Flowsha to book a workshop or private lesson, enquire about a performance, or order a handmade hoop. I’d love to hear from you.',
+  alternates: { canonical: '/contact/' },
+};
+
+export default function ContactPage() {
+  return (
+    <section className="mx-auto max-w-3xl px-6 py-16 sm:px-8">
+      <FadeIn
+        as="p"
+        className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+      >
+        Contact
+      </FadeIn>
+      <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
+        Let’s connect
+      </FadeIn>
+      <FadeIn as="p" className="mb-10 text-lg text-ink/85">
+        Booking a workshop, enquiring about a performance, or after a handmade hoop? Fill in the
+        form below or email{' '}
+        <a href={`mailto:${siteConfig.email}`} className="text-terracotta underline">
+          {siteConfig.email}
+        </a>
+        .
+      </FadeIn>
+
+      <FadeIn>
+        <Suspense fallback={<div className="h-96 rounded-3xl bg-sand/50" />}>
+          <ContactForm />
+        </Suspense>
+      </FadeIn>
+    </section>
+  );
+}

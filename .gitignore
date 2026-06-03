@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Raw, full-size source photos — NEVER commit or deploy these (keeps S3 at $0).
+# Optimised, web-sized images live in web/public/images/ and ARE committed.
+/img/
+
+# Next.js
+web/.next/
+web/out/
+web/next-env.d.ts
+web/public/images/**/nextImageExportOptimizer/
+web/public/images/**/*.json
+
+# Lambda build output
+lambda/dist/
+
+# CDK
+infrastructure/cdk.out/
+infrastructure/cdk.context.json
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Build info
+*.tsbuildinfo
+
+# OS
+.DS_Store

@@ -1,0 +1,84 @@
+name: Deploy Flowsha Hoops
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      # --- Build & package the contact Lambda ---
+      - name: Build Lambda bundle
+        run: npm run build -w lambda
+
+      - name: Package Lambda
+        run: |
+          cd lambda/dist/handler
+          zip -r ../../../handler.zip .
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy Lambda code
+        run: |
+          aws lambda update-function-code \
+            --function-name flowsha-contact \
+            --zip-file fileb://handler.zip \
+            --region ${{ env.AWS_REGION }}
+
+      # --- Build the static site (note prep-images runs against committed web/public/images) ---
+      - name: Build frontend
+        run: npm run build -w web
+        env:
+          NEXT_PUBLIC_CONTACT_API_URL: ${{ vars.CONTACT_API_URL }}
+
+      # --- Deploy to S3: immutable assets get a 1-year cache; HTML never caches ---
+      - name: Deploy assets to S3 (immutable, 1yr cache)
+        run: |
+          aws s3 sync web/out/ s3://${{ vars.S3_BUCKET }}/ \
+            --exclude "*.html" \
+            --cache-control "public, max-age=31536000, immutable" \
+            --delete
+
+      - name: Deploy HTML to S3 (no cache)
+        run: |
+          aws s3 sync web/out/ s3://${{ vars.S3_BUCKET }}/ \
+            --exclude "*" \
+            --include "*.html" \
+            --include "*.txt" \
+            --include "*.xml" \
+            --cache-control "public, must-revalidate, max-age=0"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Summary
+        run: |
+          echo "### Deployed Flowsha Hoops :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "- Lambda: flowsha-contact updated" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: synced to s3://${{ vars.S3_BUCKET }}/" >> $GITHUB_STEP_SUMMARY
+          echo "- CloudFront: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }} invalidated" >> $GITHUB_STEP_SUMMARY
