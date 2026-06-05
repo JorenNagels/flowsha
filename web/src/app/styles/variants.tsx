@@ -10,7 +10,11 @@
 import { testimonials, galleryImages, aboutParagraphs } from '@/lib/data';
 import { siteConfig } from '@/lib/site';
 
-const g = (i: number) => galleryImages[i].src;
+// These variants use plain <img> with string srcs, which Next.js does NOT rewrite
+// with basePath (unlike <ExportedImage>/static imports). On GitHub Pages the site is
+// served under /flowsha, so we must prepend the basePath manually or the images 404.
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+const g = (i: number) => `${basePath}${galleryImages[i].src}`;
 
 const offerings = [
   {
