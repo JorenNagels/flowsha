@@ -9,16 +9,16 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-clay/15 bg-cream/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-cream/10 bg-forest-dark/85 backdrop-blur-md">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-8">
-        <Logo />
+        <Logo tone="cream" />
 
         <ul className="hidden items-center gap-7 md:flex">
           {navLinks.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="text-sm font-semibold text-forest/80 transition-colors hover:text-terracotta"
+                className="text-sm font-semibold text-cream/80 transition-colors hover:text-mustard"
               >
                 {link.label}
               </Link>
@@ -27,7 +27,7 @@ export default function Nav() {
           <li>
             <Link
               href="/workshops/"
-              className="rounded-full bg-terracotta px-5 py-2 text-sm font-semibold text-cream transition-colors hover:bg-clay"
+              className="rounded-full bg-mustard px-5 py-2 text-sm font-semibold text-forest-dark transition-colors hover:bg-mustard/90"
             >
               Book a workshop
             </Link>
@@ -39,7 +39,7 @@ export default function Nav() {
           aria-label="Toggle menu"
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-forest md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-cream md:hidden"
         >
           <span className="text-2xl" aria-hidden>
             {open ? '✕' : '☰'}
@@ -48,13 +48,13 @@ export default function Nav() {
       </nav>
 
       {open && (
-        <ul className="flex flex-col gap-1 border-t border-clay/15 bg-cream px-6 pb-5 pt-2 md:hidden">
+        <ul className="flex flex-col gap-1 border-t border-cream/10 bg-forest-dark px-6 pb-5 pt-2 md:hidden">
           {navLinks.map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="block py-2 font-semibold text-forest"
+                className="block py-2 font-semibold text-cream/85"
               >
                 {link.label}
               </Link>
@@ -64,7 +64,7 @@ export default function Nav() {
             <Link
               href="/workshops/"
               onClick={() => setOpen(false)}
-              className="mt-2 inline-block rounded-full bg-terracotta px-5 py-2 font-semibold text-cream"
+              className="mt-2 inline-block rounded-full bg-mustard px-5 py-2 font-semibold text-forest-dark"
             >
               Book a workshop
             </Link>

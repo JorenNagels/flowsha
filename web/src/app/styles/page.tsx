@@ -31,7 +31,7 @@ export default function StylesPage() {
   const Active = variants[active].Component;
 
   return (
-    <div className="min-h-screen">
+    <div className="styles-scope min-h-screen">
       {/* Keyframes used by a few variants (marquee, float, slow spin). Scoped here
           so they don't leak into the real site's globals. */}
       <style

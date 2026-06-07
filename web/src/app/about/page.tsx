@@ -30,7 +30,7 @@ export default function AboutPage() {
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <FadeIn
           as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
         >
           About me
         </FadeIn>
@@ -39,7 +39,7 @@ export default function AboutPage() {
         </FadeIn>
 
         <div className="grid gap-10 md:grid-cols-[1fr_0.85fr] md:items-start">
-          <FadeIn className="order-2 space-y-5 text-lg leading-relaxed text-ink/85 md:order-1">
+          <FadeIn className="order-2 space-y-5 text-lg leading-relaxed text-cream/85 md:order-1">
             {aboutParagraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
@@ -51,7 +51,7 @@ export default function AboutPage() {
           </FadeIn>
 
           <FadeIn className="order-1 md:sticky md:top-24 md:order-2">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-sand">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-forest">
               <ExportedImage
                 src={aboutImage}
                 alt="Osha, founder of Flowsha, teaching a student in a hula hoop workshop"
@@ -64,12 +64,12 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-sand px-6 py-16 sm:px-8">
+      <section className="bg-forest/30 px-6 py-16 sm:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <FadeIn as="h2" className="mb-4 font-display text-[clamp(1.8rem,4vw,2.6rem)]">
             My teaching style
           </FadeIn>
-          <FadeIn as="p" className="text-lg text-ink/85">
+          <FadeIn as="p" className="text-lg text-cream/85">
             My classes are relaxed and low-pressure. There’s no such thing as being “good” at it,
             just space to mess about, try things and move how feels right. Expect a lot of laughing,
             plenty of encouragement, and no rush.

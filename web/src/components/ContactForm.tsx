@@ -61,15 +61,15 @@ export default function ContactForm() {
 
   if (status === 'success') {
     return (
-      <div className="rounded-3xl bg-sand p-8 text-center">
-        <p className="font-display text-2xl text-forest">Thanks! 🌀</p>
-        <p className="mt-2 text-ink/80">Got your message. I’ll reply as soon as I can.</p>
+      <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center">
+        <p className="font-display text-2xl text-mustard">Thanks! 🌀</p>
+        <p className="mt-2 text-cream/80">Got your message. I’ll reply as soon as I can.</p>
       </div>
     );
   }
 
   const field =
-    'w-full rounded-xl border border-clay/25 bg-cream px-4 py-3 text-ink outline-none transition focus:border-terracotta focus:ring-2 focus:ring-terracotta/20';
+    'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-mustard focus:ring-2 focus:ring-mustard/20';
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
@@ -83,18 +83,18 @@ export default function ContactForm() {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-forest">Your name</span>
+          <span className="mb-1.5 block text-sm font-semibold text-cream/80">Your name</span>
           <input name="name" type="text" required maxLength={100} className={field} />
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-forest">Email</span>
+          <span className="mb-1.5 block text-sm font-semibold text-cream/80">Email</span>
           <input name="email" type="email" required maxLength={320} className={field} />
         </label>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-forest">I’m interested in</span>
+          <span className="mb-1.5 block text-sm font-semibold text-cream/80">I’m interested in</span>
           <select
             name="enquiryType"
             value={enquiryType}
@@ -109,8 +109,8 @@ export default function ContactForm() {
           </select>
         </label>
         <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-forest">
-            Preferred date <span className="font-normal text-ink/50">(optional)</span>
+          <span className="mb-1.5 block text-sm font-semibold text-cream/80">
+            Preferred date <span className="font-normal text-cream/50">(optional)</span>
           </span>
           <input
             name="preferredDate"
@@ -123,12 +123,12 @@ export default function ContactForm() {
       </div>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-forest">Message</span>
+        <span className="mb-1.5 block text-sm font-semibold text-cream/80">Message</span>
         <textarea name="message" required maxLength={3000} rows={6} className={field} />
       </label>
 
       {status === 'error' && (
-        <p className="rounded-xl bg-terracotta/10 px-4 py-3 text-sm text-clay">{error}</p>
+        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
       )}
 
       <button

@@ -9,7 +9,7 @@ export default function Gallery() {
         {galleryImages.map((img) => (
           <div
             key={img.src}
-            className="relative h-56 flex-shrink-0 overflow-hidden rounded-2xl bg-sand sm:h-72"
+            className="relative h-56 flex-shrink-0 overflow-hidden rounded-2xl bg-forest sm:h-72"
             style={{ aspectRatio: '3 / 2' }}
           >
             <ExportedImage

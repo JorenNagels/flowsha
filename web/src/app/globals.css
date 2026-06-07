@@ -7,8 +7,8 @@ html {
 }
 
 body {
-  background: theme('colors.cream');
-  color: theme('colors.ink');
+  background: theme('colors.forest.dark');
+  color: theme('colors.cream');
   font-family: var(--font-nunito), sans-serif;
   font-weight: 400;
   line-height: 1.7;
@@ -47,12 +47,28 @@ body {
   display: none;
 }
 
-/* Headings use the organic display serif. */
+/* Headings use the organic display serif. Default to cream on the dark canvas
+   (fail-safe-visible — an un-coloured heading stays legible rather than dark-on-dark). */
 h1,
 h2,
 h3 {
   font-family: var(--font-fraunces), Georgia, serif;
   font-weight: 500;
   line-height: 1.1;
+  color: theme('colors.cream');
+}
+
+/* The internal /styles explorer renders inside the (now dark) root layout but must keep
+   showing the 10 prototype variants on their original light canvas. :where() contributes
+   zero specificity, so these reset rules match the global element defaults (0,0,1) and win
+   by source order — yet still lose to any explicit text-* utility a variant sets, keeping
+   even the dark variants (e.g. After Dark) pixel-intact. */
+:where(.styles-scope) {
+  background: theme('colors.cream');
+  color: theme('colors.ink');
+}
+:where(.styles-scope) h1,
+:where(.styles-scope) h2,
+:where(.styles-scope) h3 {
   color: theme('colors.forest.dark');
 }

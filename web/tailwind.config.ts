@@ -29,9 +29,14 @@ const config: Config = {
           '0%': { transform: 'rotate(0deg)' },
           '100%': { transform: 'rotate(360deg)' },
         },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-14px)' },
+        },
       },
       animation: {
         'spin-slow': 'spin-slow 28s linear infinite',
+        float: 'float 7s ease-in-out infinite',
       },
     },
   },

@@ -17,9 +17,12 @@ export default function Hero() {
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-forest-dark/70 via-forest-dark/45 to-forest-dark/80" />
 
+      {/* Soft mustard glow — the After Dark signature. */}
+      <div className="animate-float pointer-events-none absolute -right-10 top-16 -z-10 h-72 w-72 rounded-full bg-mustard/20 blur-3xl" />
+
       <FadeIn
         as="p"
-        className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-cream/85"
+        className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-mustard"
       >
         {siteConfig.offerings}
       </FadeIn>
@@ -36,7 +39,7 @@ export default function Hero() {
       </FadeIn>
 
       <FadeIn className="mt-9 flex flex-wrap items-center justify-center gap-3">
-        <CtaButton href="/workshops/" variant="primary">
+        <CtaButton href="/workshops/" variant="gold">
           Book a workshop
         </CtaButton>
         <CtaButton href="/shop/" variant="lightOutline">

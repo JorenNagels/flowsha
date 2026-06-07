@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-type Variant = 'primary' | 'outline' | 'light' | 'lightOutline';
+type Variant = 'primary' | 'gold' | 'outline' | 'light' | 'lightOutline';
 
 const styles: Record<Variant, string> = {
   primary: 'bg-terracotta text-cream hover:bg-clay',
-  outline: 'border border-forest/40 text-forest hover:bg-forest hover:text-cream',
+  gold: 'bg-mustard text-forest-dark hover:bg-mustard/90',
+  outline: 'border border-cream/40 text-cream hover:bg-cream hover:text-forest-dark',
   light: 'bg-cream text-forest hover:bg-mustard hover:text-ink',
   lightOutline: 'border border-cream/70 text-cream hover:bg-cream hover:text-forest',
 };

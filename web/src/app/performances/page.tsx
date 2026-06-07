@@ -35,14 +35,14 @@ export default function PerformancesPage() {
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <FadeIn
           as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
         >
           Performances
         </FadeIn>
         <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
           Hooping for your event
         </FadeIn>
-        <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
+        <FadeIn as="p" className="max-w-2xl text-lg text-cream/85">
           LED flow, fire hooping or daytime sets, depending on what suits your event. I’ll bring
           something that pulls a crowd and adds a bit of atmosphere.
         </FadeIn>
@@ -50,9 +50,9 @@ export default function PerformancesPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           {performanceTypes.map((p) => (
             <FadeIn key={p.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-clay/15 bg-sand/60 p-7">
-                <h2 className="font-display text-xl text-forest">{p.title}</h2>
-                <p className="mt-2 text-ink/80">{p.blurb}</p>
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-mustard/50">
+                <h2 className="font-display text-xl text-cream">{p.title}</h2>
+                <p className="mt-2 text-cream/80">{p.blurb}</p>
               </div>
             </FadeIn>
           ))}

@@ -60,21 +60,21 @@ export default function WorkshopsPage() {
           <div className="order-2 md:order-1">
             <FadeIn
               as="p"
-              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
             >
               Workshops
             </FadeIn>
             <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
               Come and play
             </FadeIn>
-            <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
+            <FadeIn as="p" className="max-w-2xl text-lg text-cream/85">
               First time with a hoop, or after something more advanced? Sessions are relaxed and
               low-pressure. No experience or coordination needed, and no pressure to be good at it.
             </FadeIn>
           </div>
 
           <FadeIn className="order-1 md:order-2">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-sand">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
               <ExportedImage
                 src={workshopImage}
                 alt="A group hula hoop workshop in full flow, everyone spinning hoops together in a colourfully lit studio"
@@ -90,9 +90,9 @@ export default function WorkshopsPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {workshopTypes.map((w) => (
             <FadeIn key={w.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-clay/15 bg-sand/60 p-7">
-                <h2 className="font-display text-xl text-forest">{w.title}</h2>
-                <p className="mt-2 text-ink/80">{w.blurb}</p>
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-mustard/50">
+                <h2 className="font-display text-xl text-cream">{w.title}</h2>
+                <p className="mt-2 text-cream/80">{w.blurb}</p>
               </div>
             </FadeIn>
           ))}
@@ -101,7 +101,7 @@ export default function WorkshopsPage() {
 
       {/* Atmosphere banner */}
       <FadeIn className="mx-auto max-w-6xl px-6 sm:px-8">
-        <div className="relative aspect-[16/7] overflow-hidden rounded-3xl bg-sand">
+        <div className="relative aspect-[16/7] overflow-hidden rounded-3xl bg-forest">
           <ExportedImage
             src={workshopBannerImage}
             alt="A smiling participant with arms open during a relaxed Flowsha hoop workshop"
@@ -113,7 +113,7 @@ export default function WorkshopsPage() {
       </FadeIn>
 
       {/* Pricing */}
-      <section className="mt-16 bg-sand px-6 py-16 sm:px-8">
+      <section className="mt-16 bg-forest/30 px-6 py-16 sm:px-8">
         <div className="mx-auto max-w-5xl">
           <FadeIn as="h2" className="mb-8 text-center font-display text-[clamp(1.8rem,5vw,2.8rem)]">
             Pricing
@@ -145,16 +145,16 @@ export default function WorkshopsPage() {
 
             {/* Private */}
             <FadeIn>
-              <div className="flex h-full flex-col rounded-3xl border border-clay/20 bg-cream p-8">
-                <h3 className="font-display text-2xl text-forest">Private Lessons</h3>
-                <p className="mt-1 text-ink/60">One-to-one, tailored entirely to you</p>
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-8">
+                <h3 className="font-display text-2xl text-cream">Private Lessons</h3>
+                <p className="mt-1 text-cream/60">One-to-one, tailored entirely to you</p>
                 <ul className="mt-5 space-y-3">
                   {privateLessons.map((p) => (
                     <li
                       key={p.duration}
-                      className="flex items-center justify-between border-b border-clay/15 pb-3"
+                      className="flex items-center justify-between border-b border-cream/10 pb-3"
                     >
-                      <span className="text-ink/80">{p.duration}</span>
+                      <span className="text-cream/80">{p.duration}</span>
                       <span className="font-display text-2xl text-terracotta">{p.price}</span>
                     </li>
                   ))}

@@ -60,12 +60,12 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-3">
           {offerings.map((o) => (
             <FadeIn key={o.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-clay/15 bg-sand/60 p-8">
-                <h2 className="font-display text-2xl text-forest">{o.title}</h2>
-                <p className="mt-3 flex-1 text-ink/80">{o.blurb}</p>
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-8 transition-colors hover:border-mustard/50">
+                <h2 className="font-display text-2xl text-cream">{o.title}</h2>
+                <p className="mt-3 flex-1 text-cream/70">{o.blurb}</p>
                 <Link
                   href={o.href}
-                  className="mt-5 inline-flex items-center gap-1 font-semibold text-terracotta transition-all hover:gap-2"
+                  className="mt-5 inline-flex items-center gap-1 font-semibold text-mustard transition-all hover:gap-2"
                 >
                   {o.cta} <span aria-hidden>→</span>
                 </Link>
@@ -76,7 +76,7 @@ export default function HomePage() {
       </section>
 
       {/* About teaser */}
-      <section className="bg-forest-dark px-6 py-20 text-cream sm:px-8">
+      <section className="bg-forest/30 px-6 py-20 text-cream sm:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <FadeIn
             as="p"
@@ -105,7 +105,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 sm:px-8">
           <FadeIn
             as="p"
-            className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+            className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
           >
             In the room
           </FadeIn>

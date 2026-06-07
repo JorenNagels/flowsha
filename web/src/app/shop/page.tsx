@@ -35,21 +35,21 @@ export default function ShopPage() {
           <div className="order-2 md:order-1">
             <FadeIn
               as="p"
-              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta"
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
             >
               Hoop Shop
             </FadeIn>
             <FadeIn as="h1" className="mb-4 font-display text-[clamp(2.5rem,7vw,4.5rem)]">
               Handmade hoops
             </FadeIn>
-            <FadeIn as="p" className="max-w-2xl text-lg text-ink/85">
+            <FadeIn as="p" className="max-w-2xl text-lg text-cream/85">
               Every hoop is made by hand. If you’re not sure what you need, tell me your height and
               what you want to do with it and I’ll point you to the right one.
             </FadeIn>
           </div>
 
           <FadeIn className="order-1 md:order-2">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-sand">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
               <ExportedImage
                 src={shopImage}
                 alt="A hooper smiling as a hoop spins around their hand in a bright, sunlit room"
@@ -64,18 +64,18 @@ export default function ShopPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {shopCategories.map((c) => (
             <FadeIn key={c.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-clay/15 bg-sand/60 p-7">
-                <h2 className="font-display text-xl text-forest">{c.title}</h2>
-                <p className="mt-2 flex-1 text-ink/80">{c.blurb}</p>
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-mustard/50">
+                <h2 className="font-display text-xl text-cream">{c.title}</h2>
+                <p className="mt-2 flex-1 text-cream/80">{c.blurb}</p>
               </div>
             </FadeIn>
           ))}
         </div>
 
         {/* Size guide */}
-        <FadeIn className="mt-12 rounded-3xl bg-sand p-8">
-          <h2 className="font-display text-2xl text-forest">Finding your size</h2>
-          <p className="mt-3 max-w-2xl text-ink/80">
+        <FadeIn className="mt-12 rounded-3xl border border-cream/10 bg-forest/40 p-8">
+          <h2 className="font-display text-2xl text-cream">Finding your size</h2>
+          <p className="mt-3 max-w-2xl text-cream/80">
             As a rough guide, bigger and heavier hoops spin slower and are easier to learn on, while
             smaller, lighter ones move faster and suit trickier moves. Not sure? Message me your
             height and experience and I’ll help you choose.
