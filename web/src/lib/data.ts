@@ -31,6 +31,14 @@ export const galleryImages: GalleryImage[] = [
     alt: 'Flowsha workshop group passing and spinning hoops together under LED lights',
   },
   {
+    src: '/images/gallery/hoop-06.jpg',
+    alt: 'Osha laughing with her arms open during a hula hoop workshop',
+  },
+  {
+    src: '/images/gallery/hoop-12.jpg',
+    alt: 'Circle of hoopers mid-flow under colourful studio lighting',
+  },
+  {
     src: '/images/gallery/hoop-07.jpg',
     alt: 'Osha smiling as she demonstrates a hoop move during a Flowsha class',
   },
@@ -39,12 +47,16 @@ export const galleryImages: GalleryImage[] = [
     alt: 'Group of hoopers raising their hoops overhead in a relaxed evening class',
   },
   {
-    src: '/images/gallery/hoop-12.jpg',
-    alt: 'Circle of hoopers mid-flow under colourful studio lighting',
+    src: '/images/gallery/hoop-10.jpg',
+    alt: 'Hoopers reaching out with their hoops during a LED-lit group class',
   },
   {
     src: '/images/gallery/hoop-13.jpg',
     alt: 'Workshop attendees reaching up with their hoops in a LED-lit studio',
+  },
+  {
+    src: '/images/gallery/hoop-05.jpg',
+    alt: 'Osha smiling during a relaxed, beginner-friendly Flowsha hoop class',
   },
   {
     src: '/images/gallery/hoop-14.jpg',
@@ -59,8 +71,20 @@ export const galleryImages: GalleryImage[] = [
     alt: 'Student passing a pair of handmade hoops during a Flowsha workshop',
   },
   {
+    src: '/images/gallery/hoop-16.jpg',
+    alt: 'Osha smiling with a student during a hands-on hula hoop session',
+  },
+  {
     src: '/images/gallery/hoop-17.jpg',
     alt: 'Hoopers exploring movement together in a colourfully lit studio',
+  },
+  {
+    src: '/images/gallery/hoop-03.jpg',
+    alt: 'Hooper smiling as he plays with a hoop in a warm, sunlit room',
+  },
+  {
+    src: '/images/gallery/hoop-04.jpg',
+    alt: 'Hooper spinning a hoop around his hand in a bright, orange-walled studio',
   },
   {
     src: '/images/gallery/hoop-18.jpg',
