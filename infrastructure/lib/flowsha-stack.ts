@@ -3,6 +3,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
@@ -11,6 +12,10 @@ const SITE_DOMAIN = 'flowsha.co.uk';
 const TO_EMAIL = process.env.TO_EMAIL || 'hello@flowsha.co.uk';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'hello@flowsha.co.uk';
 const SES_REGION = process.env.AWS_SES_REGION || 'eu-west-2';
+// CloudFront certs must live in us-east-1. DNS-validated cert for the apex + www,
+// issued 2026-06-07 in the Flowsha account.
+const CLOUDFRONT_CERT_ARN =
+  'arn:aws:acm:us-east-1:616853831644:certificate/17f21f31-1d36-465e-85fe-a5a13064bdab';
 
 export class FlowshaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -93,13 +98,46 @@ function handler(event) {
         { httpStatus: 403, responseHttpStatus: 404, responsePagePath: '/404.html' },
         { httpStatus: 404, responseHttpStatus: 404, responsePagePath: '/404.html' },
       ],
-      // --- When the real domain is ready, add a us-east-1 ACM cert + Route 53/registrar
-      //     CNAME and uncomment: ---
-      // domainNames: [SITE_DOMAIN],
-      // certificate: acm.Certificate.fromCertificateArn(this, 'Cert', '<us-east-1 cert arn>'),
+      // --- Custom domain: apex + www, served on the us-east-1 ACM cert above. ---
+      domainNames: [SITE_DOMAIN, `www.${SITE_DOMAIN}`],
+      certificate: acm.Certificate.fromCertificateArn(this, 'Cert', CLOUDFRONT_CERT_ARN),
     });
 
+    // --- GitHub Actions OIDC deploy role (used by .github/workflows/deploy.yml). ---
+    //     Lets the JorenNagels/flowsha repo assume a role with no long-lived keys.
+    const githubOidc = new iam.OpenIdConnectProvider(this, 'GitHubOidc', {
+      url: 'https://token.actions.githubusercontent.com',
+      clientIds: ['sts.amazonaws.com'],
+    });
+
+    const deployRole = new iam.Role(this, 'GitHubActionsDeployRole', {
+      roleName: 'GitHubActionsDeployRole',
+      description: 'Assumed by GitHub Actions to update the Lambda, sync the site, invalidate CDN',
+      assumedBy: new iam.WebIdentityPrincipal(githubOidc.openIdConnectProviderArn, {
+        StringEquals: { 'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com' },
+        StringLike: { 'token.actions.githubusercontent.com:sub': 'repo:JorenNagels/flowsha:*' },
+      }),
+    });
+
+    deployRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['lambda:UpdateFunctionCode'],
+        resources: [handlerFn.functionArn],
+      }),
+    );
+    siteBucket.grantReadWrite(deployRole); // s3 sync --delete needs list + RW on objects
+    deployRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ['cloudfront:CreateInvalidation'],
+        resources: [`arn:aws:cloudfront::${this.account}:distribution/${distribution.distributionId}`],
+      }),
+    );
+
     // --- Outputs (wire these into GitHub Actions secrets/vars). ---
+    new cdk.CfnOutput(this, 'DeployRoleArn', {
+      value: deployRole.roleArn,
+      description: 'GitHub Actions deploy role ARN',
+    });
     new cdk.CfnOutput(this, 'FunctionUrl', {
       value: fnUrl.url,
       description: 'Contact Lambda Function URL → NEXT_PUBLIC_CONTACT_API_URL',

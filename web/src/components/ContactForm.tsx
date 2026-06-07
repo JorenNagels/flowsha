@@ -3,7 +3,9 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '';
+// Lambda Function URLs always carry a trailing slash; strip it so we don't post
+// to `…on.aws//contact` (which the handler's route table 404s on).
+const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
 
 const ENQUIRY_TYPES = [
   { value: 'general', label: 'General enquiry' },
