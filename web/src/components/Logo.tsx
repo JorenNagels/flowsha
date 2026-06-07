@@ -48,7 +48,7 @@ export default function Logo({
       aria-label={`${siteConfig.name} home`}
       className={`group inline-flex items-center gap-2.5 ${tone === 'cream' ? 'text-cream' : 'text-forest'} ${className}`}
     >
-      <LogoMark className="h-8 w-8 text-terracotta transition-transform duration-700 group-hover:rotate-180" />
+      <LogoMark className="h-8 w-8 text-mustard transition-transform duration-700 group-hover:rotate-180" />
       <span className="font-display text-xl tracking-wide">{siteConfig.name}</span>
     </Link>
   );

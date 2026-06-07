@@ -11,14 +11,6 @@ function InstagramIcon() {
   );
 }
 
-function FacebookIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
-      <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z" />
-    </svg>
-  );
-}
-
 export default function Footer() {
   return (
     <footer className="bg-forest-dark text-cream">
@@ -27,9 +19,9 @@ export default function Footer() {
           <Link
             href="/"
             aria-label={`${siteConfig.name} home`}
-            className="inline-flex items-center gap-2.5"
+            className="group inline-flex items-center gap-2.5"
           >
-            <LogoMark className="h-9 w-9 text-mustard" />
+            <LogoMark className="h-9 w-9 text-mustard transition-transform duration-700 group-hover:rotate-180" />
             <span className="font-display text-2xl">{siteConfig.name}</span>
           </Link>
           <p className="mt-3 font-script text-2xl italic text-mustard">{siteConfig.tagline}</p>
@@ -70,15 +62,6 @@ export default function Footer() {
             >
               <InstagramIcon />
             </a>
-            <a
-              href={siteConfig.socials.facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${siteConfig.name} on Facebook`}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-cream/30 transition-colors hover:border-mustard hover:text-mustard"
-            >
-              <FacebookIcon />
-            </a>
           </div>
           <a
             href={`mailto:${siteConfig.email}`}
@@ -87,8 +70,7 @@ export default function Footer() {
             {siteConfig.email}
           </a>
           <p className="mt-3 text-sm text-cream/70">
-            Based in {siteConfig.location.city}, {siteConfig.location.region}, serving{' '}
-            {siteConfig.areaServed} &amp; the South.
+            Based in {siteConfig.location.city}, {siteConfig.location.region}.
           </p>
         </div>
       </div>

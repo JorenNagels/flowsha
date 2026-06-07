@@ -91,7 +91,7 @@ const localBusinessJsonLd = {
   },
   // Structured catchment — Southampton first, then the surrounding towns.
   areaServed: siteConfig.areaServedTowns.map((name) => ({ '@type': 'City', name })),
-  sameAs: [siteConfig.socials.instagram, siteConfig.socials.facebook],
+  sameAs: [siteConfig.socials.instagram],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

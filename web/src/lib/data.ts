@@ -5,63 +5,71 @@ export type NavLink = { href: string; label: string };
 export const navLinks: NavLink[] = [
   { href: '/about/', label: 'About' },
   { href: '/workshops/', label: 'Workshops' },
-  { href: '/performances/', label: 'Performances' },
   { href: '/shop/', label: 'Hoop Shop' },
   { href: '/contact/', label: 'Contact' },
 ];
 
 // --- Imagery (web-sized files produced by scripts/prep-images.mjs) ---
-export const heroImage = '/images/gallery/hoop-08.jpg';
-export const aboutImage = '/images/gallery/hoop-19.jpg';
+export const heroImage = '/images/gallery/hoop-09.jpg';
+export const aboutImage = '/images/gallery/hoop-06.jpg';
 
 // Per-page feature images to break up the text-heavy pages.
-export const workshopImage = '/images/gallery/hoop-10.jpg';
-export const workshopBannerImage = '/images/gallery/hoop-04.jpg';
-export const shopImage = '/images/gallery/hoop-03.jpg';
-export const contactImage = '/images/gallery/hoop-01.jpg';
+export const workshopImage = '/images/gallery/hoop-05.jpg';
+export const workshopBannerImage = '/images/gallery/hoop-14.jpg';
+export const shopImage = '/images/gallery/hoop-02.jpg';
+export const contactImage = '/images/gallery/hoop-16.jpg';
 
 export type GalleryImage = { src: string; alt: string };
 
 export const galleryImages: GalleryImage[] = [
   {
+    src: '/images/gallery/hoop-09.jpg',
+    alt: 'Hooper mid-flow with two hoops in a studio glowing with colourful LED light',
+  },
+  {
     src: '/images/gallery/hoop-08.jpg',
-    alt: 'Hooper spinning two hoops in a studio glowing with colourful LED light',
-  },
-  {
-    src: '/images/gallery/hoop-02.jpg',
-    alt: 'Flowsha workshop group practising hoop moves together',
-  },
-  {
-    src: '/images/gallery/hoop-05.jpg',
-    alt: 'Hula hoop class lit with warm pink and orange light',
+    alt: 'Flowsha workshop group passing and spinning hoops together under LED lights',
   },
   {
     src: '/images/gallery/hoop-07.jpg',
-    alt: 'Participant learning a hoop trick during a Flowsha workshop',
+    alt: 'Osha smiling as she demonstrates a hoop move during a Flowsha class',
   },
   {
     src: '/images/gallery/hoop-11.jpg',
-    alt: 'Circle of hoopers passing and spinning hoops in a relaxed class',
+    alt: 'Group of hoopers raising their hoops overhead in a relaxed evening class',
   },
-  { src: '/images/gallery/hoop-12.jpg', alt: 'Hoopers mid-flow under colourful studio lighting' },
+  {
+    src: '/images/gallery/hoop-12.jpg',
+    alt: 'Circle of hoopers mid-flow under colourful studio lighting',
+  },
   {
     src: '/images/gallery/hoop-13.jpg',
-    alt: 'Group hooping session with dancers exploring movement',
+    alt: 'Workshop attendees reaching up with their hoops in a LED-lit studio',
+  },
+  {
+    src: '/images/gallery/hoop-14.jpg',
+    alt: 'Energetic group hula hoop session in full flow',
   },
   {
     src: '/images/gallery/hoop-15.jpg',
-    alt: 'Workshop attendees practising hoop flow side by side',
+    alt: 'Hooper framed by a spinning hula hoop in soft purple light',
   },
   {
-    src: '/images/gallery/hoop-16.jpg',
-    alt: 'Hooper framed by a hula hoop during a Flowsha class',
+    src: '/images/gallery/hoop-02.jpg',
+    alt: 'Student passing a pair of handmade hoops during a Flowsha workshop',
   },
-  { src: '/images/gallery/hoop-17.jpg', alt: 'Energetic hula hoop class in full flow' },
+  {
+    src: '/images/gallery/hoop-17.jpg',
+    alt: 'Hoopers exploring movement together in a colourfully lit studio',
+  },
   {
     src: '/images/gallery/hoop-18.jpg',
-    alt: 'Dancers moving with hoops in a colourfully lit studio',
+    alt: 'Flowsha workshop group holding their hoops up for a group photo',
   },
-  { src: '/images/gallery/hoop-06.jpg', alt: 'Close-up of a hooper finding their flow in class' },
+  {
+    src: '/images/gallery/hoop-19.jpg',
+    alt: 'Smiling group of hoopers gathered with their colourful hoops after a class',
+  },
 ];
 
 // --- Testimonials ---

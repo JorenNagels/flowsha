@@ -20,14 +20,14 @@ const offerings = [
   {
     title: 'Classes',
     blurb:
-      'Group workshops and private lessons in a relaxed, friendly space. No experience or coordination needed — just turn up curious.',
+      'Group workshops and private lessons for adults and young people. No experience or coordination needed — just turn up curious.',
     href: '/workshops/',
     cta: 'Book a workshop',
     img: g(1),
   },
   {
     title: 'Performances',
-    blurb: 'LED, fire and daytime hoop acts for festivals, parties and events.',
+    blurb: 'Hoop acts for festivals, parties, and events.',
     href: '/performances/',
     cta: 'Performance enquiries',
     img: g(5),

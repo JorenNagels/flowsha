@@ -36,7 +36,6 @@ export default function ContactForm() {
       name: String(data.get('name') ?? ''),
       email: String(data.get('email') ?? ''),
       enquiryType,
-      preferredDate: String(data.get('preferredDate') ?? ''),
       message: String(data.get('message') ?? ''),
       company: String(data.get('company') ?? ''), // honeypot
     };
@@ -92,35 +91,21 @@ export default function ContactForm() {
         </label>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-cream/80">I’m interested in</span>
-          <select
-            name="enquiryType"
-            value={enquiryType}
-            onChange={(e) => setEnquiryType(e.target.value)}
-            className={field}
-          >
-            {ENQUIRY_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-cream/80">
-            Preferred date <span className="font-normal text-cream/50">(optional)</span>
-          </span>
-          <input
-            name="preferredDate"
-            type="text"
-            maxLength={100}
-            placeholder="e.g. Sat 12 July"
-            className={field}
-          />
-        </label>
-      </div>
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-semibold text-cream/80">I’m interested in</span>
+        <select
+          name="enquiryType"
+          value={enquiryType}
+          onChange={(e) => setEnquiryType(e.target.value)}
+          className={field}
+        >
+          {ENQUIRY_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-cream/80">Message</span>

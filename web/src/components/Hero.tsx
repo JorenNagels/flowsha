@@ -36,15 +36,12 @@ export default function Hero() {
         </FadeIn>
 
         <FadeIn as="p" className="mt-6 max-w-lg text-lg text-cream/80">
-          Hula hoop workshops, LED &amp; fire performances, and handmade hoops in Southampton.
+          Hula hoop workshops, performances, and handmade hoops in Southampton.
         </FadeIn>
 
         <FadeIn className="mt-9 flex flex-wrap gap-4">
           <CtaButton href="/workshops/" variant="gold">
             Book a workshop
-          </CtaButton>
-          <CtaButton href="/performances/" variant="lightOutline">
-            See performances
           </CtaButton>
         </FadeIn>
       </div>

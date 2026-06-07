@@ -13,14 +13,14 @@ const offerings = [
   {
     title: 'Classes',
     blurb:
-      'Group workshops and private lessons in a relaxed, friendly space. No experience or coordination needed. Just turn up curious.',
+      'Group workshops and private lessons for adults and young people. No experience or coordination needed. Just turn up curious.',
     href: '/workshops/',
     cta: 'Book a workshop',
   },
   {
     title: 'Performances',
-    blurb: 'LED, fire and daytime hoop acts for festivals, parties and events.',
-    href: '/performances/',
+    blurb: 'Hoop acts for festivals, parties, and events.',
+    href: '/contact/?type=performance',
     cta: 'Performance enquiries',
   },
   {
@@ -83,7 +83,7 @@ export default function HomePage() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-forest ring-1 ring-mustard/30">
               <ExportedImage
                 src={aboutImage}
-                alt="Osha, founder of Flowsha, teaching a student in a hula hoop workshop"
+                alt="Osha, founder of Flowsha, laughing during a hula hoop workshop"
                 fill
                 sizes="(min-width: 768px) 520px, 100vw"
                 className="object-cover"
@@ -131,18 +131,6 @@ export default function HomePage() {
           <div className="pl-6 sm:pl-8">
             <Gallery />
           </div>
-        </FadeIn>
-      </section>
-
-      {/* Closing CTA */}
-      <section className="px-6 py-24 text-center sm:px-8">
-        <FadeIn as="h2" className="font-display text-[clamp(2.5rem,6vw,4.5rem)] text-cream">
-          Light up your event.
-        </FadeIn>
-        <FadeIn className="mt-7">
-          <CtaButton href="/contact/" variant="gold">
-            Enquire now
-          </CtaButton>
         </FadeIn>
       </section>
     </>

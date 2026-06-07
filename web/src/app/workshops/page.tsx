@@ -4,8 +4,9 @@ import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
 import {
-  groupWorkshop,
-  privateLessons,
+  // Pricing hidden for now — restore with the Pricing section below.
+  // groupWorkshop,
+  // privateLessons,
   workshopBannerImage,
   workshopImage,
   workshopTypes,
@@ -15,7 +16,7 @@ import { siteConfig } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Hula Hoop Workshops & Private Lessons',
   description:
-    'Relaxed, beginner-friendly hula hoop workshops (£15pp) and private lessons (from £30) with Osha of Flowsha. Group classes, festivals, retreats and wellness events. No experience needed.',
+    'Relaxed, beginner-friendly hula hoop workshops and private lessons with Osha of Flowsha. Group classes, festivals, retreats and wellness events. No experience needed.',
   alternates: { canonical: '/workshops/' },
 };
 
@@ -32,22 +33,23 @@ const serviceJsonLd = {
   areaServed: siteConfig.areaServedTowns.map((name) => ({ '@type': 'City', name })),
   description:
     'Beginner and intermediate hula hoop workshops, private lessons, festival workshops and wellness retreats.',
-  offers: [
-    {
-      '@type': 'Offer',
-      name: 'Group Workshop (1.5 hours)',
-      price: '15',
-      priceCurrency: 'GBP',
-      description: 'Per person, 1.5 hour group hula hoop workshop.',
-    },
-    {
-      '@type': 'Offer',
-      name: 'Private Lesson (1 hour)',
-      price: '50',
-      priceCurrency: 'GBP',
-      description: 'One-to-one private hula hoop lesson.',
-    },
-  ],
+  // Pricing hidden for now — restore alongside the visible Pricing section below.
+  // offers: [
+  //   {
+  //     '@type': 'Offer',
+  //     name: 'Group Workshop (1.5 hours)',
+  //     price: '15',
+  //     priceCurrency: 'GBP',
+  //     description: 'Per person, 1.5 hour group hula hoop workshop.',
+  //   },
+  //   {
+  //     '@type': 'Offer',
+  //     name: 'Private Lesson (1 hour)',
+  //     price: '50',
+  //     priceCurrency: 'GBP',
+  //     description: 'One-to-one private hula hoop lesson.',
+  //   },
+  // ],
 };
 
 export default function WorkshopsPage() {
@@ -112,7 +114,11 @@ export default function WorkshopsPage() {
         </div>
       </FadeIn>
 
-      {/* Pricing */}
+      {/* Pricing — hidden for now; restore this section (and the `groupWorkshop`/
+          `privateLessons` imports + the JSON-LD `offers` above) when ready to
+          publish prices again. Inner label comments removed so this block stays
+          a single valid JSX comment.
+
       <section className="mt-16 bg-forest/30 px-6 py-16 sm:px-8">
         <div className="mx-auto max-w-5xl">
           <FadeIn as="h2" className="mb-8 text-center font-display text-[clamp(1.8rem,5vw,2.8rem)]">
@@ -120,7 +126,6 @@ export default function WorkshopsPage() {
           </FadeIn>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Group */}
             <FadeIn>
               <div className="flex h-full flex-col rounded-3xl bg-forest-dark p-8 text-cream">
                 <h3 className="font-display text-2xl text-cream">{groupWorkshop.name}</h3>
@@ -143,7 +148,6 @@ export default function WorkshopsPage() {
               </div>
             </FadeIn>
 
-            {/* Private */}
             <FadeIn>
               <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-8">
                 <h3 className="font-display text-2xl text-cream">Private Lessons</h3>
@@ -167,6 +171,23 @@ export default function WorkshopsPage() {
             </FadeIn>
           </div>
         </div>
+      </section>
+      */}
+
+      {/* Ask about the next workshop */}
+      <section className="mt-16 bg-forest/30 px-6 py-20 text-center sm:px-8">
+        <FadeIn as="h2" className="font-display text-[clamp(1.8rem,5vw,2.8rem)] text-cream">
+          Ask me about my next workshop
+        </FadeIn>
+        <FadeIn as="p" className="mx-auto mt-3 max-w-xl text-cream/80">
+          Group classes and private lessons run regularly around Southampton. Drop me a message and
+          I’ll let you know what’s coming up.
+        </FadeIn>
+        <FadeIn className="mt-7">
+          <CtaButton href="/contact/?type=workshop" variant="gold">
+            Get in touch
+          </CtaButton>
+        </FadeIn>
       </section>
     </>
   );

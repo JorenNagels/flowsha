@@ -90,11 +90,11 @@ export default function ShopPage() {
         </FadeIn>
         <FadeIn as="p" className="mx-auto mt-3 max-w-xl text-cream/90">
           There’s no online checkout yet. For now, message me what you’re after, including fully
-          custom hoops, and I’ll sort it out.
+          custom hoops.
         </FadeIn>
         <FadeIn className="mt-7">
           <CtaButton href={`/contact/?type=shop`} variant="light">
-            Enquire to order
+            Message me
           </CtaButton>
         </FadeIn>
         <FadeIn as="p" className="mt-4 text-sm text-cream/80">

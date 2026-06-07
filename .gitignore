@@ -5,6 +5,9 @@ node_modules/
 # Optimised, web-sized images live in web/public/images/ and ARE committed.
 /img/
 
+# Local thumbnails written by scripts/prep-images.mjs for eyeballing shots.
+.image-review/
+
 # Next.js
 web/.next/
 web/out/
