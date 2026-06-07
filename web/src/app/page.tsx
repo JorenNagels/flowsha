@@ -4,8 +4,9 @@ import FadeIn from '@/components/FadeIn';
 import Testimonials from '@/components/Testimonials';
 import Gallery from '@/components/Gallery';
 import CtaButton from '@/components/CtaButton';
+import ExportedImage from '@/components/ExportedImage';
 import JsonLd from '@/components/JsonLd';
-import { aboutParagraphs, testimonials } from '@/lib/data';
+import { aboutImage, aboutParagraphs, testimonials } from '@/lib/data';
 import { siteConfig } from '@/lib/site';
 
 const offerings = [
@@ -77,24 +78,37 @@ export default function HomePage() {
 
       {/* About teaser */}
       <section className="bg-forest/30 px-6 py-20 text-cream sm:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <FadeIn
-            as="p"
-            className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
-          >
-            Meet your guide
+        <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
+          <FadeIn>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-forest ring-1 ring-mustard/30">
+              <ExportedImage
+                src={aboutImage}
+                alt="Osha, founder of Flowsha, teaching a student in a hula hoop workshop"
+                fill
+                sizes="(min-width: 768px) 520px, 100vw"
+                className="object-cover"
+              />
+            </div>
           </FadeIn>
-          <FadeIn as="h2" className="mb-5 font-display text-[clamp(2rem,5vw,3rem)] text-cream">
-            Hi, I’m Osha
-          </FadeIn>
-          <FadeIn as="p" className="text-cream/85">
-            {aboutParagraphs[0]}
-          </FadeIn>
-          <FadeIn className="mt-8">
-            <CtaButton href="/about/" variant="light">
-              Read my story
-            </CtaButton>
-          </FadeIn>
+          <div>
+            <FadeIn
+              as="p"
+              className="text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+            >
+              Meet your guide
+            </FadeIn>
+            <FadeIn as="h2" className="mt-3 font-display text-[clamp(2rem,5vw,3.2rem)] text-cream">
+              Hi, I’m Osha
+            </FadeIn>
+            <FadeIn as="p" className="mt-5 text-cream/80">
+              {aboutParagraphs[0]}
+            </FadeIn>
+            <FadeIn className="mt-8">
+              <CtaButton href="/about/" variant="light">
+                Read my story
+              </CtaButton>
+            </FadeIn>
+          </div>
         </div>
       </section>
 
@@ -121,19 +135,13 @@ export default function HomePage() {
       </section>
 
       {/* Closing CTA */}
-      <section className="bg-terracotta px-6 py-16 text-center text-cream sm:px-8">
-        <FadeIn as="h2" className="font-display text-[clamp(2rem,5vw,3.2rem)] text-cream">
-          Ready to find your flow?
+      <section className="px-6 py-24 text-center sm:px-8">
+        <FadeIn as="h2" className="font-display text-[clamp(2.5rem,6vw,4.5rem)] text-cream">
+          Light up your event.
         </FadeIn>
-        <FadeIn as="p" className="mx-auto mt-3 max-w-xl text-cream/90">
-          First hoop or a booking enquiry? Either way, get in touch.
-        </FadeIn>
-        <FadeIn className="mt-7 flex flex-wrap justify-center gap-3">
-          <CtaButton href="/workshops/" variant="light">
-            Book a workshop
-          </CtaButton>
-          <CtaButton href="/contact/" variant="lightOutline">
-            Contact me
+        <FadeIn className="mt-7">
+          <CtaButton href="/contact/" variant="gold">
+            Enquire now
           </CtaButton>
         </FadeIn>
       </section>
