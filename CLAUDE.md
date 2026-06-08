@@ -8,6 +8,11 @@ Marketing website for **Flowsha** — Osha's hula-hoop business (classes,
 performances, handmade hoops). Priorities, in order: **SEO**, fast/cheap static hosting,
 and a working contact/booking form. A hoop **ordering/ecommerce** backend comes later.
 
+**Status:** live in production at <https://flowsha.co.uk> (S3 + CloudFront; contact form
+on Lambda + SES; released via `v*.*.*` tags). Account IDs, resource inventory, the deploy
+flow, and SES state are in **[DEPLOYMENT.md](./DEPLOYMENT.md)** — read it before touching
+infra or DNS.
+
 The stack deliberately mirrors two sibling projects:
 
 - **`../portfolio-elliot`** — the frontend template (Next.js static export + Tailwind +
@@ -29,9 +34,9 @@ flowsha-hoops/                npm-workspaces monorepo
 │   └── next.config.mjs       static export + next-image-export-optimizer config
 ├── lambda/                   Contact/booking handler (SES email)  → Lambda Function URL
 │   └── src/handler.ts        Route table: POST /contact (add /orders later)
-├── infrastructure/           AWS CDK: Lambda, S3, CloudFront, ACM (Route53 later)
+├── infrastructure/           AWS CDK: Lambda, S3, CloudFront, ACM cert, GitHub OIDC role
 ├── scripts/prep-images.mjs   one-time sharp downscale of raw img/ → web/public/images
-└── .github/workflows/        deploy.yml (build + deploy on tag v*.*.*)
+└── .github/workflows/        deploy.yml (prod, on tag v*.*.*) + pages.yml (staging preview)
 ```
 
 - Frontend is **fully static**. The browser calls the **Lambda Function URL** directly
@@ -83,8 +88,10 @@ that way:
 - **S3** and **SES** round to $0.00 at this volume **only if** we never deploy the raw
   863 MB of originals. Deploy **optimised WebP only**; raw `img/` is gitignored and never
   synced to S3.
-- **Do NOT use Route 53** ($0.50/mo hosted zone). Point the domain via the registrar's DNS
-  (CNAME/ALIAS → CloudFront).
+- **Route 53** hosts `flowsha.co.uk` — the domain was registered there, so the hosted zone
+  (~$0.50/mo) is the one intentional deviation from $0. Accepted because it keeps ACM
+  validation, the CloudFront alias, and all SES DNS (DKIM + custom MAIL FROM) in one place.
+  Don't add *more* hosted zones, and the cost discipline above still applies.
 
 ## Conventions
 
@@ -96,12 +103,20 @@ that way:
 - Images: add raw originals to `img/`, run `scripts/prep-images.mjs`, reference the
   optimised files under `web/public/images/...` via `<ExportedImage>`.
 
-## Placeholders to replace before launch
+## Placeholders / launch checklist
 
-- Domain `flowsha.co.uk` (used in metadata/sitemap/CORS/CDK — swap in one place).
-- `TO_EMAIL` / `FROM_EMAIL` for the contact Lambda.
-- Instagram + Facebook URLs in `data.ts`.
-- Logo SVG and the Playlist Script font file.
+**Resolved (live):** domain `flowsha.co.uk` (registered + DNS in Route 53),
+`TO_EMAIL`/`FROM_EMAIL` = `hello@flowsha.co.uk` (Zoho mailbox), Instagram URL in
+`site.ts`/`data.ts`.
+
+**Still outstanding:**
+
+- **Logo** — placeholder SVG (looping curved line) until a real logo exists.
+- **Playlist Script font** — wire via `next/font/local` when the `.woff2` is supplied;
+  falls back to Fraunces italic for the "Find your flow" tagline.
+- **SES production access** — request pending (see [DEPLOYMENT.md](./DEPLOYMENT.md)). Until
+  it's granted, the customer auto-reply only reaches verified addresses; owner
+  notifications already work.
 
 ## Future: hoop ordering
 
@@ -117,4 +132,11 @@ npm run dev -w web        # Next dev server (http://localhost:3000)
 npm run dev -w lambda     # contact Lambda dev server (http://localhost:3001)
 npm run build -w web      # prep-images + optimizer + next build → web/out
 cd infrastructure && npx cdk synth   # validate infra
+
+# --- deploy (all AWS commands need the flowsha SSO profile) ---
+aws sso login --profile flowsha                          # re-auth (token expires)
+cd infrastructure && AWS_PROFILE=flowsha npx cdk deploy   # ship infra changes
+git tag vX.Y.Z && git push origin vX.Y.Z                  # release prod (deploy.yml)
 ```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full deploy/SES/DNS runbook.

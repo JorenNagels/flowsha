@@ -6,6 +6,9 @@ hoops. _Find your flow._
 Static, SEO-optimised site (Next.js) with a serverless contact/booking form (AWS Lambda +
 SES). Built to grow a hoop-ordering shop later.
 
+**Live:** <https://flowsha.co.uk> · deploy & operations details in
+[DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ## Tech stack
 
 - **Frontend:** Next.js 16 (static export) · TypeScript · Tailwind CSS ·
@@ -20,8 +23,9 @@ Monorepo (npm workspaces): `web/` (site), `lambda/` (contact API), `infrastructu
 ## Prerequisites
 
 - Node.js 20+
-- For deploy/infra: an AWS account + AWS CLI configured, and AWS CDK
-  (`npm i -g aws-cdk`).
+- For deploy/infra: access to the Flowsha AWS account via the `flowsha` SSO profile
+  (`aws sso login --profile flowsha`) and AWS CDK. Every AWS command takes
+  `AWS_PROFILE=flowsha`.
 
 ## Local development
 
@@ -61,42 +65,46 @@ npm run build -w web        # → web/out (static site)
 npx serve web/out          # preview the production build locally
 ```
 
-## One-time AWS setup
+## AWS setup (already done)
 
-1. **CDK bootstrap & deploy** the infrastructure:
-   ```bash
-   npm run build -w lambda
-   cd infrastructure && npx cdk deploy
-   ```
-   Note the outputs: **FunctionUrl**, **SiteBucketName**, **DistributionId**.
-2. **Verify SES**: in the SES console (region `eu-west-2`), verify the sender
-   (`FROM_EMAIL`) and recipient (`TO_EMAIL`) addresses (or the domain). New accounts are
-   in the **SES sandbox** — request production access to email arbitrary recipients.
-3. **GitHub repo secrets/vars**: `AWS_ACCOUNT_ID`, `NEXT_PUBLIC_CONTACT_API_URL`
-   (the Function URL), plus the bucket name and distribution id from step 1.
+The infrastructure is deployed and CI/CD is live — see [DEPLOYMENT.md](./DEPLOYMENT.md)
+for the full inventory, account/profile, SES state, and runbooks. In brief, the account
+holds the `FlowshaHoopsStack` (Lambda + S3 + CloudFront + ACM cert), a GitHub OIDC deploy
+role, and a verified SES domain identity (DKIM + custom MAIL FROM). GitHub Actions on
+`JorenNagels/flowsha` is configured with:
+
+- secret `AWS_ACCOUNT_ID`
+- variables `CONTACT_API_URL` (the Function URL, **no trailing slash**), `S3_BUCKET`,
+  `CLOUDFRONT_DISTRIBUTION_ID`
+
+SES is still in the **sandbox** (production-access request pending), so the customer
+auto-reply only reaches verified addresses until that's granted; owner notifications work.
 
 ## Deploy
 
 Push a version tag (or run the workflow manually):
 
 ```bash
-git tag v0.1.0 && git push origin v0.1.0
+git tag v1.1.0 && git push origin v1.1.0   # current release: v1.0.0
 ```
 
-GitHub Actions then: builds + updates the Lambda, builds `web/`, syncs to S3 (immutable
-assets / no-cache HTML), and invalidates CloudFront.
+GitHub Actions then assumes the OIDC role (no stored keys) and: builds + updates the
+Lambda, builds `web/`, syncs to S3 (immutable assets / no-cache HTML), and invalidates
+CloudFront. Every push to `main` also rebuilds the GitHub Pages **staging** preview.
 
 ## Cost
 
 Effectively **$0/month** at small-business traffic: CloudFront (1 TB/mo) and Lambda
-(1M req/mo) are free forever; S3 + SES round to $0.00 at this scale. We avoid Route 53
-($0.50/mo) by using the domain registrar's DNS. Only the domain registration (~£8–12/yr)
-is a real recurring cost. **Never deploy the raw originals** — that's the one thing that
-would change this.
+(1M req/mo) are free forever; S3 + SES round to $0.00 at this scale. The domain is
+registered in **Route 53**, so its hosted zone (~$0.50/mo) and the domain registration
+(~£8–12/yr) are the only real recurring costs. **Never deploy the raw originals** —
+that's the one thing that would change this.
 
-## Things to replace before launch
+## Still to do before full launch
 
-- Domain `flowsha.co.uk` (placeholder).
-- Contact `TO_EMAIL` / `FROM_EMAIL`.
-- Instagram + Facebook URLs (`web/src/lib/data.ts`).
-- Logo SVG and the Playlist Script font file.
+Done: domain `flowsha.co.uk` (live), contact emails (`hello@flowsha.co.uk` via Zoho),
+Instagram URL. Outstanding:
+
+- Real logo SVG (to replace the placeholder looping-line mark).
+- Playlist Script font (`.woff2` → `next/font/local`).
+- SES production access (request pending) so the customer auto-reply reaches all visitors.

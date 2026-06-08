@@ -1,15 +1,15 @@
-// Central site configuration. Swap the placeholders (domain, socials, email) here.
+// Central site configuration. Edit brand-level copy, domain, contact and socials here.
 export const siteConfig = {
   name: 'Flowsha',
   founder: 'Osha',
-  // Placeholder domain — no domain bought yet. Swap before launch.
+  // Live domain (registered + DNS in Route 53, served via CloudFront).
   url: 'https://flowsha.co.uk',
   tagline: 'Find your flow',
   subtagline: 'Play • Flow • Connect',
   offerings: 'Classes • Performances • Handmade Hoops',
   description:
     'Hula hoop workshops, performances and handmade hoops with Osha of Flowsha in Southampton, Hampshire. Relaxed, beginner-friendly classes, LED & fire performance booking, and custom hoops across Southampton and the South of England. Find your flow.',
-  // Placeholder contact + socials — replace before launch.
+  // Live contact + socials. Email is a Zoho mailbox on the domain; SES sends from it.
   email: 'hello@flowsha.co.uk',
   // Local SEO — based in Southampton, serving Hampshire & the South.
   // Human-readable label (used in Footer copy + as a fallback in metadata).
