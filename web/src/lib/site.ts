@@ -52,3 +52,16 @@ export const siteConfig = {
 } as const;
 
 export const ogImage = '/images/og/flowsha-og.jpg';
+
+// BreadcrumbList JSON-LD (Home → current page). Helps search + AI engines place
+// the page within the site. `path` is the trailing-slash route, e.g. '/shop/'.
+export function breadcrumbJsonLd(name: string, path: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteConfig.url },
+      { '@type': 'ListItem', position: 2, name, item: `${siteConfig.url}${path}` },
+    ],
+  };
+}

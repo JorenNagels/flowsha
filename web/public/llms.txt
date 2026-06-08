@@ -1,0 +1,25 @@
+# Flowsha
+
+> Flowsha is the hula hoop business of Osha, based in Southampton, Hampshire (UK).
+> It offers relaxed, beginner-friendly hula hoop workshops and private lessons,
+> LED and fire hoop performance booking, and handmade hula hoops made to order.
+> Brand tagline: "Find your flow."
+
+Flowsha serves Southampton and the surrounding South of England, including
+Eastleigh, Romsey, Winchester, Fareham, Portsmouth and Bournemouth. Classes are
+welcoming to all levels — no prior experience or coordination needed. Enquiries
+and bookings go through the contact form or hello@flowsha.co.uk.
+
+## Pages
+
+- [Home](https://flowsha.co.uk/): Overview of classes, performances and handmade hoops.
+- [About Osha](https://flowsha.co.uk/about/): The flow artist and hula hoop teacher behind Flowsha.
+- [Workshops & Private Lessons](https://flowsha.co.uk/workshops/): Beginner-friendly group workshops, private lessons, festival and wellness-event hooping.
+- [Hoop Shop](https://flowsha.co.uk/shop/): Handmade hula hoops for every level (beginner, intermediate, kids, dance, custom), plus accessories and re-taping. Enquire to order.
+- [Contact & Booking](https://flowsha.co.uk/contact/): Book a workshop or lesson, enquire about a performance, or order a hoop.
+
+## Contact
+
+- Email: hello@flowsha.co.uk
+- Instagram: https://www.instagram.com/flowshaosha
+- Location: Southampton, Hampshire, United Kingdom

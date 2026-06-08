@@ -4,7 +4,7 @@ import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
 import { aboutImage, aboutParagraphs } from '@/lib/data';
-import { siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'About Osha | Hula Hoop Teacher & Flow Artist',
@@ -13,19 +13,10 @@ export const metadata: Metadata = {
   alternates: { canonical: '/about/' },
 };
 
-const breadcrumb = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: siteConfig.url },
-    { '@type': 'ListItem', position: 2, name: 'About', item: `${siteConfig.url}/about/` },
-  ],
-};
-
 export default function AboutPage() {
   return (
     <>
-      <JsonLd data={breadcrumb} />
+      <JsonLd data={breadcrumbJsonLd('About', '/about/')} />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <FadeIn

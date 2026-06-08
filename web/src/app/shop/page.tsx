@@ -4,7 +4,7 @@ import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
 import { shopCategories, shopImage } from '@/lib/data';
-import { siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Hoop Shop | Handmade Hula Hoops & Accessories',
@@ -29,6 +29,7 @@ export default function ShopPage() {
   return (
     <>
       <JsonLd data={itemListJsonLd} />
+      <JsonLd data={breadcrumbJsonLd('Shop', '/shop/')} />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[1fr_0.85fr] md:items-center">

@@ -3,8 +3,9 @@ import { Suspense } from 'react';
 import ExportedImage from '@/components/ExportedImage';
 import FadeIn from '@/components/FadeIn';
 import ContactForm from '@/components/ContactForm';
+import JsonLd from '@/components/JsonLd';
 import { contactImage } from '@/lib/data';
-import { siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Contact & Booking',
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 sm:px-8">
+      <JsonLd data={breadcrumbJsonLd('Contact', '/contact/')} />
       <FadeIn
         as="p"
         className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"

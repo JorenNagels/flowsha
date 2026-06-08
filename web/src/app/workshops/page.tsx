@@ -11,7 +11,7 @@ import {
   workshopImage,
   workshopTypes,
 } from '@/lib/data';
-import { siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd, siteConfig } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Hula Hoop Workshops & Private Lessons',
@@ -56,6 +56,7 @@ export default function WorkshopsPage() {
   return (
     <>
       <JsonLd data={serviceJsonLd} />
+      <JsonLd data={breadcrumbJsonLd('Workshops', '/workshops/')} />
 
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <div className="grid gap-10 md:grid-cols-[1fr_0.85fr] md:items-center">
