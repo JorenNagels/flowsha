@@ -261,6 +261,8 @@ export type PrivacySection = {
   heading: string;
   body: string[];
   list?: string[];
+  // Optional outbound link rendered after the section (e.g. a processor's own policy).
+  link?: { before?: string; label: string; href: string; after?: string };
 };
 
 export const privacyPolicy: {
@@ -281,6 +283,12 @@ export const privacyPolicy: {
         'When you use the contact form — your name, email address, the type of enquiry, an optional preferred date, and the message you write. You choose what to put in the message.',
         'Spam protection (Cloudflare Turnstile) — to tell real visitors apart from bots, our form uses Cloudflare Turnstile, which processes your IP address and some technical signals from your browser (such as a TLS fingerprint and the user-agent string). These signals are strictly necessary to block spam and are not used to identify you or to track you across other websites.',
       ],
+      link: {
+        before: 'For full detail on what Turnstile collects, see ',
+        label: 'Cloudflare’s Turnstile Privacy Policy',
+        href: 'https://www.cloudflare.com/turnstile-privacy-policy/',
+        after: '.',
+      },
     },
     {
       heading: 'Why we use it, and our lawful basis',

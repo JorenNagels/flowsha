@@ -60,6 +60,20 @@ export default function PrivacyPage() {
                   ))}
                 </ul>
               )}
+              {section.link && (
+                <p className="mt-3 text-cream/80">
+                  {section.link.before}
+                  <a
+                    href={section.link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-mustard underline transition-colors hover:text-mustard/80"
+                  >
+                    {section.link.label}
+                  </a>
+                  {section.link.after}
+                </p>
+              )}
             </FadeIn>
           ))}
         </div>
