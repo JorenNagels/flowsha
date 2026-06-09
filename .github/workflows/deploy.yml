@@ -52,6 +52,7 @@ jobs:
         run: npm run build -w web
         env:
           NEXT_PUBLIC_CONTACT_API_URL: ${{ vars.CONTACT_API_URL }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
 
       # --- Deploy to S3: immutable assets get a 1-year cache; HTML never caches ---
       - name: Deploy assets to S3 (immutable, 1yr cache)

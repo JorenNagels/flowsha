@@ -10,6 +10,9 @@ export const contactSchema = z.object({
   message: z.string().trim().min(1, 'Please enter a message.').max(3000),
   // Honeypot: real users leave this empty. Handled (silently dropped) in the handler.
   company: z.string().max(200).optional().default(''),
+  // Cloudflare Turnstile token. Verified in the handler when protection is enabled.
+  // Optional so the dev Lambda (no secret configured) still accepts submissions.
+  turnstileToken: z.string().max(4096).optional().default(''),
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;

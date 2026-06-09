@@ -12,6 +12,9 @@ const SITE_DOMAIN = 'flowsha.co.uk';
 const TO_EMAIL = process.env.TO_EMAIL || 'hello@flowsha.co.uk';
 const FROM_EMAIL = process.env.FROM_EMAIL || 'hello@flowsha.co.uk';
 const SES_REGION = process.env.AWS_SES_REGION || 'eu-west-2';
+// SSM SecureString holding the Cloudflare Turnstile secret key. Created once,
+// out of band (see DEPLOYMENT.md) — never committed. The Lambda reads it at runtime.
+const TURNSTILE_SECRET_PARAM = '/flowsha/turnstile-secret';
 // CloudFront certs must live in us-east-1. DNS-validated cert for the apex + www,
 // issued 2026-06-07 in the Flowsha account.
 const CLOUDFRONT_CERT_ARN =
@@ -35,6 +38,9 @@ export class FlowshaStack extends cdk.Stack {
         FROM_EMAIL,
         AWS_SES_REGION: SES_REGION,
         ALLOWED_ORIGIN: `https://${SITE_DOMAIN}`,
+        // Cloudflare Turnstile: the Lambda reads this SSM SecureString at runtime.
+        // Create it once (never in code): see DEPLOYMENT.md. No per-deploy env needed.
+        TURNSTILE_SECRET_PARAM: TURNSTILE_SECRET_PARAM,
       },
     });
 
@@ -42,6 +48,24 @@ export class FlowshaStack extends cdk.Stack {
       new iam.PolicyStatement({
         actions: ['ses:SendEmail', 'ses:SendRawEmail'],
         resources: ['*'],
+      }),
+    );
+
+    // --- Read the Turnstile secret (SSM SecureString) at runtime. ---
+    handlerFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ssm:GetParameter'],
+        resources: [
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${TURNSTILE_SECRET_PARAM}`,
+        ],
+      }),
+    );
+    // Decrypt the SecureString. Scoped to SSM-mediated calls so it can't be used elsewhere.
+    handlerFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['kms:Decrypt'],
+        resources: ['*'],
+        conditions: { StringEquals: { 'kms:ViaService': `ssm.${this.region}.amazonaws.com` } },
       }),
     );
 

@@ -54,6 +54,30 @@ Repo `JorenNagels/flowsha` — Actions **secret**:
 - `CONTACT_API_URL` = the Function URL (no trailing slash)
 - `S3_BUCKET` = `flowsha.co.uk-site`
 - `CLOUDFRONT_DISTRIBUTION_ID` = `E3VZCH84OH2M69`
+- `TURNSTILE_SITE_KEY` = Cloudflare Turnstile **site** key (public; baked into the build)
+
+## Spam protection — Cloudflare Turnstile
+
+The contact form runs an **invisible** Cloudflare Turnstile widget; the Lambda verifies
+the token (`lambda/src/lib/turnstile.ts`) before sending any email. Free, no Google.
+
+- **Site key** (public) → GitHub Actions variable `TURNSTILE_SITE_KEY` (above), injected
+  as `NEXT_PUBLIC_TURNSTILE_SITE_KEY` at build time.
+- **Secret key** → SSM SecureString **`/flowsha/turnstile-secret`** in `eu-west-2`. The
+  Lambda reads + caches it at runtime (CDK grants `ssm:GetParameter` + scoped `kms:Decrypt`
+  and sets `TURNSTILE_SECRET_PARAM`). **Never** put the secret in code or env files.
+
+Create / rotate the secret (then `cdk deploy` so the IAM grant exists):
+
+```bash
+aws ssm put-parameter --profile flowsha --region eu-west-2 \
+  --name /flowsha/turnstile-secret --type SecureString \
+  --value '<turnstile-secret-key>' --overwrite
+```
+
+**Fail-safe behaviour:** if neither the secret param nor an inline `TURNSTILE_SECRET_KEY`
+(dev only) is set, verification is skipped and submissions pass through — so the local dev
+Lambda works with no config. Production protection is only as live as that SSM parameter.
 
 **Cut a release:**
 
