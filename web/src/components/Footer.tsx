@@ -76,9 +76,14 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-cream/15">
-        <p className="mx-auto max-w-6xl px-6 py-5 text-center text-xs text-cream/60 sm:px-8">
-          © {new Date().getFullYear()} {siteConfig.name}. {siteConfig.subtagline}.
-        </p>
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 py-5 text-xs text-cream/60 sm:flex-row sm:justify-between sm:px-8">
+          <p>
+            © {new Date().getFullYear()} {siteConfig.name}. {siteConfig.subtagline}.
+          </p>
+          <Link href="/privacy/" className="transition-colors hover:text-mustard">
+            Privacy policy
+          </Link>
+        </div>
       </div>
     </footer>
   );

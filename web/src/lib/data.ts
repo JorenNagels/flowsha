@@ -251,3 +251,91 @@ export const ctas = {
   },
   contact: { label: 'Contact me', href: '/contact/' },
 } as const;
+
+// --- Privacy policy ---------------------------------------------------------
+// Plain-English notice covering the contact form and the Cloudflare Turnstile
+// spam protection. Edit the copy here. NOTE: this is a practical, good-faith
+// notice — not legal advice. Have it reviewed before relying on it for a
+// business that takes bookings or payments. Update `updated` when you edit.
+export type PrivacySection = {
+  heading: string;
+  body: string[];
+  list?: string[];
+};
+
+export const privacyPolicy: {
+  updated: string;
+  intro: string[];
+  sections: PrivacySection[];
+} = {
+  updated: '9 June 2026',
+  intro: [
+    'Flowsha (“we”, “us”) is run by Osha and based in Southampton, Hampshire. This page explains what personal information we collect through this website, why we collect it, and what rights you have. For anything to do with your data, email us at hello@flowsha.co.uk.',
+    'We keep this short and honest: this is a small business website. We only collect what we need to reply to you and to keep the contact form free of spam.',
+  ],
+  sections: [
+    {
+      heading: 'What we collect',
+      body: ['We collect personal information in two ways:'],
+      list: [
+        'When you use the contact form — your name, email address, the type of enquiry, an optional preferred date, and the message you write. You choose what to put in the message.',
+        'Spam protection (Cloudflare Turnstile) — to tell real visitors apart from bots, our form uses Cloudflare Turnstile, which processes your IP address and some technical signals from your browser (such as a TLS fingerprint and the user-agent string). These signals are strictly necessary to block spam and are not used to identify you or to track you across other websites.',
+      ],
+    },
+    {
+      heading: 'Why we use it, and our lawful basis',
+      body: ['We use this information to:'],
+      list: [
+        'Read and reply to your enquiry and, where relevant, take steps to arrange a workshop, performance or hoop order (our legitimate interest in responding to you, and to take steps towards a possible agreement).',
+        'Protect the contact form from spam and abuse (our legitimate interest in keeping the site secure and usable).',
+      ],
+    },
+    {
+      heading: 'Who handles it for us',
+      body: [
+        'We don’t sell your information or use it for advertising. We rely on a few trusted providers who process data on our behalf:',
+      ],
+      list: [
+        'Amazon Web Services (AWS) — hosts the website and sends our enquiry emails, in their London (UK) region.',
+        'Cloudflare — provides the Turnstile spam protection on the form.',
+        'Zoho Mail — the mailbox where your enquiry arrives so we can reply.',
+      ],
+    },
+    {
+      heading: 'International transfers',
+      body: [
+        'Some of these providers may process data outside the UK. Where that happens, it is covered by appropriate safeguards (such as the UK’s International Data Transfer Agreement or Standard Contractual Clauses) so your information stays protected.',
+      ],
+    },
+    {
+      heading: 'Cookies',
+      body: [
+        'We don’t use advertising or analytics cookies, so there’s no cookie banner. Cloudflare Turnstile may set a strictly-necessary cookie purely to carry out its bot check — this kind of cookie doesn’t require your consent under UK rules.',
+      ],
+    },
+    {
+      heading: 'How long we keep it',
+      body: [
+        'We keep enquiry emails for as long as we need them to deal with your enquiry and to keep reasonable records, and then delete them. The technical signals used for spam protection are short-lived and handled by Cloudflare as part of the bot check.',
+      ],
+    },
+    {
+      heading: 'Your rights',
+      body: [
+        'You have the right to ask for a copy of the information we hold about you, to have it corrected or deleted, and to object to how we use it. To do any of these, just email hello@flowsha.co.uk and we’ll help.',
+      ],
+    },
+    {
+      heading: 'Complaints',
+      body: [
+        'If you’re unhappy with how we’ve handled your information, please tell us first so we can put it right. You also have the right to complain to the UK’s Information Commissioner’s Office (ICO) at ico.org.uk.',
+      ],
+    },
+    {
+      heading: 'Changes to this policy',
+      body: [
+        'If we change how we handle your information, we’ll update this page and the date shown at the top.',
+      ],
+    },
+  ],
+};
