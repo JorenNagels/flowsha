@@ -83,7 +83,7 @@ export default function HomePage() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-forest ring-1 ring-mustard/30">
               <ExportedImage
                 src={aboutImage}
-                alt="Osha, founder of Flowsha, laughing during a hula hoop workshop"
+                alt="Osha, founder of Flowsha, arms raised mid-performance in golden evening light"
                 fill
                 sizes="(min-width: 768px) 520px, 100vw"
                 className="object-cover"

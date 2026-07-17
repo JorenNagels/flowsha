@@ -53,7 +53,7 @@ export default function ShopPage() {
             <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest">
               <ExportedImage
                 src={shopImage}
-                alt="A hooper smiling as a hoop spins around their hand in a bright, sunlit room"
+                alt="Osha holding four brightly coloured handmade Flowsha hoops in a sunlit park"
                 fill
                 sizes="(min-width: 768px) 480px, 100vw"
                 className="object-cover"
