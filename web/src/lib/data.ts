@@ -351,6 +351,7 @@ export const feedbackQuestions: FeedbackQuestion[] = [
     otherKey: 'sourceOther',
     question: 'Where did you find out about this class?',
     options: [
+      { value: 'beinthesky', label: 'Be In The Sky studio' },
       { value: 'instagram', label: 'Instagram' },
       { value: 'facebook', label: 'Facebook' },
       { value: 'friend', label: 'A friend / word of mouth' },
@@ -389,7 +390,7 @@ export const feedbackQuestions: FeedbackQuestion[] = [
       'Would you be interested in a weekly hoop course? Each week we’d focus on something new and build up to a final choreography that brings it all together.',
     options: [
       { value: 'yes', label: 'Yes, I’d love that' },
-      { value: 'maybe', label: 'Maybe / tell me more' },
+      { value: 'maybe', label: 'Maybe' },
       { value: 'no', label: 'Not for me' },
     ],
   },
