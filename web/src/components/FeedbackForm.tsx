@@ -433,9 +433,13 @@ function QuestionStep({
 
       {question.kind === 'scale' && (
         <div>
-          {/* Equal-width segments in a single row: all values (up to 0–10) stay
-              on one line at every width, including mobile. */}
-          <div className="flex gap-1 sm:gap-1.5">
+          {/* Responsive scale: a 6-col grid on mobile (wraps to two rows with
+              comfortable tap targets), collapsing to a single row of N equal
+              segments from `sm` up. Keeps 0–10 intact per NPS best practice. */}
+          <div
+            className="grid grid-cols-6 gap-1.5 sm:gap-2 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]"
+            style={{ '--cols': question.max - question.min + 1 } as React.CSSProperties}
+          >
             {Array.from({ length: question.max - question.min + 1 }, (_, i) => question.min + i).map(
               (n) => {
                 const active = answers[question.key] === n;
@@ -445,7 +449,7 @@ function QuestionStep({
                     type="button"
                     onClick={() => set(question.key, active ? null : n)}
                     aria-pressed={active}
-                    className={`min-w-0 flex-1 rounded-lg border py-3 text-center text-sm tabular-nums transition ${
+                    className={`min-w-0 rounded-lg border py-3 text-center text-sm tabular-nums transition ${
                       active
                         ? 'border-mustard bg-mustard font-semibold text-forest-dark'
                         : 'border-cream/20 text-cream/80 hover:border-mustard/70 hover:text-cream'
