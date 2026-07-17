@@ -74,6 +74,104 @@ export const feedbackSchema = z
 
 export type FeedbackInput = z.infer<typeof feedbackSchema>;
 
+// --- PAR-Q + Informed Consent waiver (see web/src/app/waiver) ---------------
+// Persisted to DynamoDB (POST /waiver), never emailed to the signer. The typed
+// full name + the three acceptance checkboxes form a simple electronic
+// signature; the handler stamps an audit trail (IP, user-agent, this version).
+//
+// WAIVER_VERSION identifies the exact wording a signer agreed to. BUMP IT
+// whenever the waiver text in web/src/lib/data.ts changes, so stored records
+// stay tied to the version that was actually shown.
+export const WAIVER_VERSION = '2026-07-v1';
+
+const YES_NO = ['yes', 'no'] as const;
+
+// Age in whole years from a YYYY-MM-DD string, or null if it isn't a valid past date.
+export function ageFromDob(dob: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return null;
+  const d = new Date(`${dob}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  const now = new Date();
+  if (d.getTime() > now.getTime()) return null; // future DOB
+  let age = now.getUTCFullYear() - d.getUTCFullYear();
+  const m = now.getUTCMonth() - d.getUTCMonth();
+  if (m < 0 || (m === 0 && now.getUTCDate() < d.getUTCDate())) age--;
+  return age;
+}
+
+export const waiverSchema = z
+  .object({
+    // Personal details (all required).
+    fullName: z.string().trim().min(1, 'Please enter your full name.').max(100),
+    dateOfBirth: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Please enter your date of birth.'),
+    address: z.string().trim().min(1, 'Please enter your address.').max(300),
+    phone: z.string().trim().min(1, 'Please enter a phone number.').max(50),
+    email: z.string().trim().email('Please enter a valid email address.').max(320),
+
+    // Emergency contact (required).
+    emergencyName: z.string().trim().min(1, 'Please enter an emergency contact name.').max(100),
+    emergencyPhone: z.string().trim().min(1, 'Please enter an emergency contact phone number.').max(50),
+
+    // Medical representation — optional free-text detail.
+    medicalDetails: z.string().trim().max(3000).optional().default(''),
+
+    // Explicit yes/no choices.
+    photoConsent: z.enum(YES_NO, {
+      errorMap: () => ({ message: 'Please choose whether you consent to photos and video.' }),
+    }),
+    groupChat: z.enum(YES_NO, {
+      errorMap: () => ({ message: 'Please choose whether you’d like to join the community chat.' }),
+    }),
+
+    // Acknowledgements — must all be ticked (the signature act).
+    acceptRisk: z.literal(true, {
+      errorMap: () => ({ message: 'Please confirm you accept the assumption of risk.' }),
+    }),
+    acceptMedical: z.literal(true, {
+      errorMap: () => ({ message: 'Please confirm the medical representation.' }),
+    }),
+    acceptConsent: z.literal(true, {
+      errorMap: () => ({ message: 'Please confirm you have read and accept this waiver.' }),
+    }),
+
+    // Typed-name signature. Required for adults; for under-18s the guardian
+    // signs instead (enforced in superRefine below).
+    signatureName: z.string().trim().max(100).optional().default(''),
+
+    // Parent/guardian details — required only when the participant is under 18.
+    guardianName: z.string().trim().max(100).optional().default(''),
+    guardianRelationship: z.string().trim().max(100).optional().default(''),
+    guardianSignature: z.string().trim().max(100).optional().default(''),
+
+    // Honeypot: real users leave this empty. Dropped silently in the handler.
+    company: z.string().max(200).optional().default(''),
+    // Cloudflare Turnstile token — verified in the handler when protection is on.
+    turnstileToken: z.string().max(4096).optional().default(''),
+  })
+  .superRefine((d, ctx) => {
+    const age = ageFromDob(d.dateOfBirth);
+    if (age === null) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dateOfBirth'], message: 'Please enter a valid date of birth.' });
+      return;
+    }
+    if (age < 18) {
+      // Minor: a parent/guardian must complete and sign on their behalf.
+      if (d.guardianName === '')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianName'], message: 'A parent or guardian must sign for a participant under 18.' });
+      if (d.guardianRelationship === '')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianRelationship'], message: 'Please enter the guardian’s relationship to the participant.' });
+      if (d.guardianSignature === '')
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianSignature'], message: 'Please enter the guardian’s name as their signature.' });
+    } else if (d.signatureName === '') {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['signatureName'], message: 'Please type your name to sign.' });
+    }
+  });
+
+export type WaiverInput = z.infer<typeof waiverSchema>;
+
 export function formatZodError(error: z.ZodError): string {
   return error.issues.map((i) => i.message).join(' ');
 }

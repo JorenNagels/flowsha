@@ -469,6 +469,35 @@ export const feedbackQuestions: FeedbackQuestion[] = [
   },
 ];
 
+// --- Waiver (PAR-Q + Informed Consent) --------------------------------------
+// Powers the hidden /waiver page (noindex). The signer's typed name + the
+// acceptance checkboxes form a simple electronic signature; the Lambda stamps
+// an audit trail on submit. Text is verbatim from Osha's paper form.
+//
+// WAIVER_VERSION identifies the exact wording shown. It MUST stay in sync with
+// WAIVER_VERSION in lambda/src/lib/validation.ts — bump BOTH whenever any of the
+// clause text below changes, so stored records stay tied to what was signed.
+export const WAIVER_VERSION = '2026-07-v1';
+
+export const waiverContent = {
+  intro:
+    'Please read and complete this PAR-Q and Informed Consent form before your first class. All information you give is kept completely private and confidential under data protection legislation.',
+  assumptionOfRisk:
+    'I acknowledge that I am voluntarily participating in the fitness class(es) provided by the instructor. I understand that physical exercise, by its very nature, carries with it certain inherent risks, including but not limited to physical injury, strain, discomfort, and even the possibility of serious injury. I hereby assume all risks and responsibility for any such injuries or other medical incidents.',
+  medicalRepresentation:
+    'I am physically fit to participate in the fitness class(es) and have no medical condition that would prevent my safe participation. If I have any medical conditions or concerns, I have consulted with a healthcare provider and obtained clearance to participate and will inform my instructor if a condition may prevent me from comfortably participating in the class.',
+  photoRelease:
+    'I hereby grant permission to the instructor to take and use photographs and videos of me for external communications and promotional purposes on social media accounts as well as the company website. I understand I am able to withdraw my consent at any time by informing the instructor prior to the class.',
+  informedConsentPoints: [
+    'The aim of all classes provided by Flowsha is to improve general fitness, flexibility, mobility, creativity, hand-eye coordination, and to learn new movement skills in a friendly, relaxed environment.',
+    'All information given to the instructor is kept completely private and confidential under data protection legislation.',
+    'If during the session you experience any significant pain or discomfort, please notify the instructor immediately. All Flowsha classes are structured to minimise risk of injury where possible.',
+    'Please ask as many questions as you need in order to further minimise risk to yourself and others in the class as well.',
+  ],
+  release:
+    'I hereby acknowledge that I have read, understood and accurately completed this waiver, and fully understand that it is a release of liability. I confirm that I’m voluntarily engaging in an acceptable level of exercise, and that my participation involves a risk of injury. I agree to notify Flowsha of any changes to the answers above.',
+} as const;
+
 // --- Privacy policy ---------------------------------------------------------
 // Plain-English notice covering the contact form and the Cloudflare Turnstile
 // spam protection. Edit the copy here. NOTE: this is a practical, good-faith

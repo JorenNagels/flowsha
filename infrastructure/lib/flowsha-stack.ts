@@ -16,6 +16,13 @@ const SES_REGION = process.env.AWS_SES_REGION || 'eu-west-2';
 // SSM SecureString holding the Cloudflare Turnstile secret key. Created once,
 // out of band (see DEPLOYMENT.md) — never committed. The Lambda reads it at runtime.
 const TURNSTILE_SECRET_PARAM = '/flowsha/turnstile-secret';
+// Clerk instance issuer for verifying dashboard session JWTs (public config, no
+// secret). Set at deploy: `CLERK_ISSUER=https://<slug>.clerk.accounts.dev`.
+// Empty = dashboard auth disabled (GET /feedback always 401).
+const CLERK_ISSUER = process.env.CLERK_ISSUER || '';
+// Optional comma-separated email allowlist (defence-in-depth on top of Clerk's
+// invite-only instance). Only enforced if the session token carries an email claim.
+const DASHBOARD_ALLOWED_EMAILS = process.env.DASHBOARD_ALLOWED_EMAILS || '';
 // CloudFront certs must live in us-east-1. DNS-validated cert for the apex + www,
 // issued 2026-06-07 in the Flowsha account.
 const CLOUDFRONT_CERT_ARN =
@@ -30,6 +37,15 @@ export class FlowshaStack extends cdk.Stack {
     //     always-free) and RETAIN so submissions survive a stack delete.
     const feedbackTable = new dynamodb.Table(this, 'FeedbackTable', {
       tableName: 'flowsha-feedback',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // --- DynamoDB table for signed PAR-Q + Informed Consent waivers. ---
+    //     Same on-demand billing + RETAIN policy as the feedback table.
+    const waiverTable = new dynamodb.Table(this, 'WaiverTable', {
+      tableName: 'flowsha-waiver',
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
@@ -54,6 +70,11 @@ export class FlowshaStack extends cdk.Stack {
         TURNSTILE_SECRET_PARAM: TURNSTILE_SECRET_PARAM,
         // Feedback survey submissions are written here (POST /feedback).
         FEEDBACK_TABLE_NAME: feedbackTable.tableName,
+        // Signed waivers are written here (POST /waiver) + read for the dashboard.
+        WAIVER_TABLE_NAME: waiverTable.tableName,
+        // Clerk auth for the private dashboard's authenticated GET /feedback.
+        CLERK_ISSUER,
+        DASHBOARD_ALLOWED_EMAILS,
       },
     });
 
@@ -64,8 +85,13 @@ export class FlowshaStack extends cdk.Stack {
       }),
     );
 
-    // --- Persist feedback submissions (write-only; the Lambda never reads back). ---
-    feedbackTable.grantWriteData(handlerFn);
+    // --- Feedback: write submissions (POST /feedback) + read them back for the
+    //     authenticated dashboard (GET /feedback). ---
+    feedbackTable.grantReadWriteData(handlerFn);
+
+    // --- Waivers: write signed forms (POST /waiver) + read them back for the
+    //     authenticated dashboard (GET /waiver). ---
+    waiverTable.grantReadWriteData(handlerFn);
 
     // --- Read the Turnstile secret (SSM SecureString) at runtime. ---
     handlerFn.addToRolePolicy(
@@ -94,8 +120,9 @@ export class FlowshaStack extends cdk.Stack {
           `https://www.${SITE_DOMAIN}`,
           'http://localhost:3000',
         ],
-        allowedMethods: [lambda.HttpMethod.POST],
-        allowedHeaders: ['Content-Type'],
+        // POST for the forms; GET for the dashboard's authenticated read.
+        allowedMethods: [lambda.HttpMethod.POST, lambda.HttpMethod.GET],
+        allowedHeaders: ['Content-Type', 'Authorization'],
         maxAge: cdk.Duration.seconds(86400),
       },
     });
@@ -185,6 +212,10 @@ function handler(event) {
     new cdk.CfnOutput(this, 'FeedbackTableName', {
       value: feedbackTable.tableName,
       description: 'DynamoDB table holding /feedback survey submissions',
+    });
+    new cdk.CfnOutput(this, 'WaiverTableName', {
+      value: waiverTable.tableName,
+      description: 'DynamoDB table holding /waiver signed submissions',
     });
     new cdk.CfnOutput(this, 'SiteBucketName', {
       value: siteBucket.bucketName,

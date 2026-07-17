@@ -83,6 +83,10 @@ const field =
 
 const labelText = 'mb-1.5 block text-sm font-semibold text-cream/80';
 
+// Rough email shape check — mirrors the Lambda's EMAIL_RE (lib/validation.ts) so
+// the personal step catches a malformed address before advancing, not just on submit.
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
 // Pill / chip styling for scale numbers, options and schedule slots.
 function chip(active: boolean): string {
   return [
@@ -178,6 +182,14 @@ export default function FeedbackForm() {
   const currentQuestion = step > 0 ? feedbackQuestions[step - 1] : null;
 
   function goNext() {
+    // Validate the email's shape before leaving the personal step so a typo is
+    // caught here rather than after filling in the whole survey.
+    if (step === 0 && answers.email.trim() !== '' && !EMAIL_RE.test(answers.email.trim())) {
+      setStatus('error');
+      setError('Please enter a valid email address.');
+      return;
+    }
+    setStatus('idle');
     setError('');
     if (step < totalSteps - 1) setStep(step + 1);
   }

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Fraunces, Nunito } from 'next/font/google';
 import './globals.css';
-import Nav from '@/components/Nav';
-import Footer from '@/components/Footer';
+import Providers from '@/components/Providers';
+import SiteChrome from '@/components/SiteChrome';
 import { ogImage, siteConfig } from '@/lib/site';
 
 const fraunces = Fraunces({
@@ -102,9 +102,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${fraunces.variable} ${nunito.variable}`}
     >
       <body>
-        <Nav />
-        <main>{children}</main>
-        <Footer />
+        <Providers>
+          <SiteChrome>{children}</SiteChrome>
+        </Providers>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}

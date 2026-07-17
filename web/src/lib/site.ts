@@ -50,7 +50,7 @@ export const siteConfig = {
     longitude: -1.4044,
   },
   socials: {
-    instagram: 'https://www.instagram.com/flowshaosha',
+    instagram: 'https://www.instagram.com/flowshaofficial/',
   },
 } as const;
 

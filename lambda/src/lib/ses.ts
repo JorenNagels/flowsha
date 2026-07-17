@@ -1,5 +1,5 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-import { ENQUIRY_LABELS, type ContactInput } from './validation.js';
+import { ENQUIRY_LABELS, type ContactInput, type WaiverInput } from './validation.js';
 
 const sesClient = new SESClient({
   region: process.env.AWS_SES_REGION || 'eu-west-2',
@@ -136,7 +136,7 @@ function buildConfirmationHtml(input: ContactInput): string {
         <tr><td style="padding:26px 36px 32px;">
           <div style="border-top:1px solid #efe5d1;padding-top:18px;">
             <p style="font-size:13px;color:#7a5240;margin:0 0 6px;">
-              <a href="https://www.instagram.com/flowshaosha" style="color:#d2703a;text-decoration:none;font-weight:600;">@flowshaosha</a>
+              <a href="https://www.instagram.com/flowshaofficial/" style="color:#d2703a;text-decoration:none;font-weight:600;">@flowshaofficial</a>
               &nbsp;&middot;&nbsp;
               <a href="https://flowsha.co.uk" style="color:#d2703a;text-decoration:none;font-weight:600;">flowsha.co.uk</a>
             </p>
@@ -170,7 +170,7 @@ function buildConfirmationText(input: ContactInput): string {
     'Osha',
     'Flowsha · Find your flow',
     '',
-    'Instagram: https://www.instagram.com/flowshaosha',
+    'Instagram: https://www.instagram.com/flowshaofficial/',
     'Web: https://flowsha.co.uk',
   ]
     .filter((line) => line !== '')
@@ -220,4 +220,99 @@ export async function sendContactEmail(input: ContactInput): Promise<void> {
   } catch (err) {
     console.error('Confirmation auto-reply failed (non-fatal):', err);
   }
+}
+
+// --- Signed waiver notification (owner only) --------------------------------
+//     Emails Osha a full copy of each signed PAR-Q + Informed Consent form.
+//     No auto-reply to the signer yet (SES sandbox); they get an on-screen copy.
+
+function yesNo(v: string): string {
+  return v === 'yes' ? 'Yes' : 'No';
+}
+
+function buildWaiverRows(input: WaiverInput, signedAt: string): string {
+  const isMinor = input.guardianName.trim() !== '';
+  return [
+    row('Full name', input.fullName),
+    row('Date of birth', input.dateOfBirth),
+    row('Address', input.address),
+    row('Phone', input.phone),
+    row('Email', input.email),
+    row('Emergency contact', `${input.emergencyName} — ${input.emergencyPhone}`),
+    input.medicalDetails ? row('Medical details', input.medicalDetails) : '',
+    row('Photo/video consent', yesNo(input.photoConsent)),
+    row('Community chat', yesNo(input.groupChat)),
+    row('Acknowledgements', 'Assumption of risk ✓ · Medical representation ✓ · Read & accepted release ✓'),
+    isMinor
+      ? row(
+          'Signed by (guardian)',
+          `${input.guardianSignature} — ${input.guardianRelationship} of ${input.fullName}`,
+        )
+      : row('Signed by', input.signatureName),
+    row('Signed at', signedAt),
+  ].join('');
+}
+
+function buildWaiverHtml(input: WaiverInput, signedAt: string): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"/></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;background-color:#f7f1e3;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f7f1e3;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+        <tr><td style="background-color:#2c3f2a;padding:28px 32px;">
+          <h1 style="color:#d8a534;margin:0;font-size:22px;font-weight:400;letter-spacing:1px;">New signed waiver — Flowsha</h1>
+        </td></tr>
+        <tr><td style="padding:8px 16px 24px;">
+          <table width="100%" cellpadding="0" cellspacing="0">${buildWaiverRows(input, signedAt)}</table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+function buildWaiverText(input: WaiverInput, signedAt: string): string {
+  const isMinor = input.guardianName.trim() !== '';
+  return [
+    'New signed waiver — Flowsha',
+    '',
+    `Full name: ${input.fullName}`,
+    `Date of birth: ${input.dateOfBirth}`,
+    `Address: ${input.address}`,
+    `Phone: ${input.phone}`,
+    `Email: ${input.email}`,
+    `Emergency contact: ${input.emergencyName} — ${input.emergencyPhone}`,
+    input.medicalDetails ? `Medical details: ${input.medicalDetails}` : '',
+    `Photo/video consent: ${yesNo(input.photoConsent)}`,
+    `Community chat: ${yesNo(input.groupChat)}`,
+    'Acknowledgements: assumption of risk, medical representation, read & accepted release — all confirmed',
+    isMinor
+      ? `Signed by (guardian): ${input.guardianSignature} — ${input.guardianRelationship} of ${input.fullName}`
+      : `Signed by: ${input.signatureName}`,
+    `Signed at: ${signedAt}`,
+  ]
+    .filter((line) => line !== '')
+    .join('\n');
+}
+
+export async function sendWaiverEmail(input: WaiverInput): Promise<void> {
+  const signedAt = new Date().toISOString();
+  await sesClient.send(
+    new SendEmailCommand({
+      Source: FROM_EMAIL,
+      Destination: { ToAddresses: [TO_EMAIL] },
+      ReplyToAddresses: [input.email],
+      Message: {
+        Subject: {
+          Charset: 'UTF-8',
+          Data: `Flowsha waiver signed — ${input.fullName}`,
+        },
+        Body: {
+          Html: { Charset: 'UTF-8', Data: buildWaiverHtml(input, signedAt) },
+          Text: { Charset: 'UTF-8', Data: buildWaiverText(input, signedAt) },
+        },
+      },
+    }),
+  );
 }

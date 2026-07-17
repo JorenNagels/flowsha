@@ -1,10 +1,17 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { z } from 'zod';
 import { jsonResponse } from './lib/cors.js';
-import { contactSchema, feedbackSchema, formatZodError } from './lib/validation.js';
-import { sendContactEmail } from './lib/ses.js';
-import { saveFeedback } from './lib/db.js';
+import {
+  contactSchema,
+  feedbackSchema,
+  waiverSchema,
+  WAIVER_VERSION,
+  formatZodError,
+} from './lib/validation.js';
+import { sendContactEmail, sendWaiverEmail } from './lib/ses.js';
+import { saveFeedback, listFeedback, saveWaiver, listWaivers } from './lib/db.js';
 import { isTurnstileEnabled, verifyTurnstile } from './lib/turnstile.js';
+import { verifySession } from './lib/clerk.js';
 
 const MAX_BODY_BYTES = 64 * 1024;
 
@@ -84,6 +91,68 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
 
       await saveFeedback(parsed.data);
       return jsonResponse(200, { ok: true });
+    }
+
+    // Authenticated read for the private /dashboard. Verifies a Clerk session
+    // JWT (Bearer token) before returning any submissions.
+    if (method === 'GET' && path === '/feedback') {
+      const auth = event.headers.authorization ?? '';
+      const token = auth.replace(/^Bearer /i, '').trim();
+      const session = await verifySession(token);
+      if (!session) return jsonResponse(401, { error: 'Unauthorized' });
+
+      return jsonResponse(200, { items: await listFeedback() });
+    }
+
+    // Signed PAR-Q + Informed Consent waiver. Emails Osha a copy and persists
+    // it, stamping an audit trail (IP, user-agent, waiver version) for the
+    // electronic signature.
+    if (method === 'POST' && path === '/waiver') {
+      const parsed = parseBody(event, waiverSchema);
+      if (!parsed.ok) return parsed.response;
+
+      // Honeypot: a bot filled the hidden field. Pretend success, store nothing.
+      if (parsed.data.company.trim() !== '') {
+        return jsonResponse(200, { ok: true });
+      }
+
+      // Cloudflare Turnstile: confirm a real human (only when a secret is configured).
+      if (isTurnstileEnabled()) {
+        const human = await verifyTurnstile(
+          parsed.data.turnstileToken,
+          event.requestContext.http.sourceIp,
+        );
+        if (!human) {
+          return jsonResponse(400, {
+            error: 'Could not verify you’re human. Please refresh the page and try again.',
+          });
+        }
+      }
+
+      // The signed waiver is a legal record — persist it first (critical; may
+      // throw → 500). The owner notification is best-effort: a failed email
+      // must never lose the stored waiver or block the signer.
+      await saveWaiver(parsed.data, {
+        signedIp: event.requestContext.http.sourceIp,
+        userAgent: event.headers['user-agent'],
+        waiverVersion: WAIVER_VERSION,
+      });
+      try {
+        await sendWaiverEmail(parsed.data);
+      } catch (err) {
+        console.error('Waiver notification email failed (non-fatal):', err);
+      }
+      return jsonResponse(200, { ok: true });
+    }
+
+    // Authenticated read of signed waivers for the private /dashboard/waivers.
+    if (method === 'GET' && path === '/waiver') {
+      const auth = event.headers.authorization ?? '';
+      const token = auth.replace(/^Bearer /i, '').trim();
+      const session = await verifySession(token);
+      if (!session) return jsonResponse(401, { error: 'Unauthorized' });
+
+      return jsonResponse(200, { items: await listWaivers() });
     }
 
     // Future: POST /orders, POST /checkout, etc.
