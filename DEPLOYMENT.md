@@ -101,19 +101,36 @@ It does not touch production.
 - **Two emails per submission** (`lambda/src/lib/ses.ts`): an owner notification (critical)
   and a styled customer auto-reply (best-effort — wrapped in try/catch so it can never
   break the visitor's submission).
-- **Sandbox status:** as of the last release SES is still in the **sandbox**, with a
-  **production-access request pending** (support case `178080788200578`). Until it's
-  granted, the auto-reply only delivers to verified addresses; the owner notification
-  works because the whole domain is verified. Approval is an account-level flip — **no
-  code change or redeploy needed**. Check with:
+- **Sandbox status:** SES is still in the **sandbox**. The production-access request
+  (support case `178080788200578`) was **DENIED** — twice, most recently on 2026-06-08
+  after a detailed appeal. Both denials were the generic boilerplate template ("could
+  have a negative impact… for security purposes we cannot provide specific details"),
+  which is an account-risk auto-flag, **not** a reaction to our (clean, transactional,
+  user-initiated) use case. Until access is granted, the auto-reply only delivers to
+  verified addresses; the owner notification works because the whole domain is verified.
+  Approval is an account-level flip — **no code change or redeploy needed**. Check with:
 
   ```bash
   AWS_PROFILE=flowsha aws sesv2 get-account --region eu-west-2 \
     --query "{Production:ProductionAccessEnabled,Review:Details.ReviewDetails}"
   ```
 
-  On the Basic support plan the case can only be answered in the AWS Support Center
+  On the Basic support plan the case can only be read/answered in the AWS Support Center
   console (the Support API is blocked).
+- **What still works in the sandbox:** the **owner notification** (→ verified
+  `hello@flowsha.co.uk`) delivers normally, so no enquiry is lost. The **only** casualty
+  is the customer auto-reply to unverified visitor addresses.
+- **Paths to unblock** (re-arguing the same case just re-sends the template):
+  1. Let the account age with some billing history, then file a **fresh** request cold
+     (not as a reply to the denied case) — account risk score is the likeliest cause.
+  2. Open a **new** case (Service limit increase → SES) asking for the specific policy
+     basis for the denial of `178080788200578`, to route it off the boilerplate queue.
+  3. Request in a **different region** (e.g. `eu-west-1`) — different reviewer/automation.
+  4. Pragmatic fallback: route **only** the customer auto-reply through a transactional
+     provider with a trivial approval bar (Resend/Postmark/Mailgun free tier), keep SES
+     for the owner notification. Deviates from the se-parti/SES pattern — decide before
+     doing.
+  - Draft escalation text (for path 2) is kept at `docs/ses-production-appeal.md`.
 
 ## Runbooks
 
