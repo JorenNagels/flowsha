@@ -11,14 +11,14 @@ import {
   workshopImage,
   workshopTypes,
 } from '@/lib/data';
-import { breadcrumbJsonLd, siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd, pageMetadata, siteConfig } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Hula Hoop Workshops & Private Lessons',
   description:
     'Relaxed, beginner-friendly hula hoop workshops and private lessons with Osha of Flowsha. Group classes, festivals, retreats and wellness events. No experience needed.',
-  alternates: { canonical: '/workshops/' },
-};
+  path: '/workshops/',
+});
 
 const serviceJsonLd = {
   '@context': 'https://schema.org',

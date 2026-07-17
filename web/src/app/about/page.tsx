@@ -4,14 +4,14 @@ import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
 import { aboutImage, aboutParagraphs } from '@/lib/data';
-import { breadcrumbJsonLd } from '@/lib/site';
+import { breadcrumbJsonLd, pageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'About Osha | Hula Hoop Teacher & Flow Artist',
   description:
     'Meet Osha, the flow artist and hula hoop teacher behind Flowsha. Her relaxed, welcoming workshops help everyone discover the joy of movement and flow.',
-  alternates: { canonical: '/about/' },
-};
+  path: '/about/',
+});
 
 export default function AboutPage() {
   return (

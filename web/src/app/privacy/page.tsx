@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 import FadeIn from '@/components/FadeIn';
 import JsonLd from '@/components/JsonLd';
 import { privacyPolicy } from '@/lib/data';
-import { breadcrumbJsonLd } from '@/lib/site';
+import { breadcrumbJsonLd, pageMetadata } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Privacy Policy',
   description:
     'How Flowsha handles the personal information you share through this website — the contact form and Cloudflare Turnstile spam protection — and your rights over it.',
-  alternates: { canonical: '/privacy/' },
-};
+  path: '/privacy/',
+});
 
 export default function PrivacyPage() {
   return (

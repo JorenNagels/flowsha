@@ -32,7 +32,8 @@ export default function Hero() {
           as="h1"
           className="mt-4 font-display text-[clamp(3rem,9vw,6.5rem)] leading-[0.9] text-cream drop-shadow-sm"
         >
-          Find your <span className="italic text-mustard">flow</span>
+          flow <span className="text-mustard">•</span> play{' '}
+          <span className="text-mustard">•</span> connect
         </FadeIn>
 
         <FadeIn as="p" className="mt-6 max-w-lg text-lg text-cream/80">

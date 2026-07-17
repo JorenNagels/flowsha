@@ -4,14 +4,14 @@ import FadeIn from '@/components/FadeIn';
 import CtaButton from '@/components/CtaButton';
 import JsonLd from '@/components/JsonLd';
 import { shopCategories, shopImage } from '@/lib/data';
-import { breadcrumbJsonLd, siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd, pageMetadata, siteConfig } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Hoop Shop | Handmade Hula Hoops & Accessories',
   description:
     'Handmade hula hoops for every level: beginner, intermediate, kids, dance and fully custom, plus accessories and re-taping, from Flowsha.',
-  alternates: { canonical: '/shop/' },
-};
+  path: '/shop/',
+});
 
 const itemListJsonLd = {
   '@context': 'https://schema.org',

@@ -5,14 +5,14 @@ import FadeIn from '@/components/FadeIn';
 import ContactForm from '@/components/ContactForm';
 import JsonLd from '@/components/JsonLd';
 import { contactImage } from '@/lib/data';
-import { breadcrumbJsonLd, siteConfig } from '@/lib/site';
+import { breadcrumbJsonLd, pageMetadata, siteConfig } from '@/lib/site';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: 'Contact & Booking',
   description:
     'Get in touch with Flowsha to book a workshop or private lesson, enquire about a performance, or order a handmade hoop. I’d love to hear from you.',
-  alternates: { canonical: '/contact/' },
-};
+  path: '/contact/',
+});
 
 export default function ContactPage() {
   return (
