@@ -433,19 +433,28 @@ function QuestionStep({
 
       {question.kind === 'scale' && (
         <div>
-          <div className="flex flex-wrap gap-2">
+          {/* Equal-width segments in a single row: all values (up to 0–10) stay
+              on one line at every width, including mobile. */}
+          <div className="flex gap-1 sm:gap-1.5">
             {Array.from({ length: question.max - question.min + 1 }, (_, i) => question.min + i).map(
-              (n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => set(question.key, answers[question.key] === n ? null : n)}
-                  className={chip(answers[question.key] === n)}
-                  aria-pressed={answers[question.key] === n}
-                >
-                  {n}
-                </button>
-              ),
+              (n) => {
+                const active = answers[question.key] === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => set(question.key, active ? null : n)}
+                    aria-pressed={active}
+                    className={`min-w-0 flex-1 rounded-lg border py-3 text-center text-sm tabular-nums transition ${
+                      active
+                        ? 'border-mustard bg-mustard font-semibold text-forest-dark'
+                        : 'border-cream/20 text-cream/80 hover:border-mustard/70 hover:text-cream'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                );
+              },
             )}
           </div>
           <div className="mt-2 flex justify-between text-xs text-cream/50">
