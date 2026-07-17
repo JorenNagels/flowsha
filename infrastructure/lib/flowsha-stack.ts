@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
@@ -24,6 +25,16 @@ export class FlowshaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // --- DynamoDB table for hidden client-feedback survey submissions. ---
+    //     On-demand billing (rounds to $0 at this volume; 25 GB storage is
+    //     always-free) and RETAIN so submissions survive a stack delete.
+    const feedbackTable = new dynamodb.Table(this, 'FeedbackTable', {
+      tableName: 'flowsha-feedback',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
     // --- Contact-form Lambda (SES email). Built by `npm run build -w lambda`. ---
     const handlerFn = new lambda.Function(this, 'ContactApi', {
       functionName: 'flowsha-contact',
@@ -41,6 +52,8 @@ export class FlowshaStack extends cdk.Stack {
         // Cloudflare Turnstile: the Lambda reads this SSM SecureString at runtime.
         // Create it once (never in code): see DEPLOYMENT.md. No per-deploy env needed.
         TURNSTILE_SECRET_PARAM: TURNSTILE_SECRET_PARAM,
+        // Feedback survey submissions are written here (POST /feedback).
+        FEEDBACK_TABLE_NAME: feedbackTable.tableName,
       },
     });
 
@@ -50,6 +63,9 @@ export class FlowshaStack extends cdk.Stack {
         resources: ['*'],
       }),
     );
+
+    // --- Persist feedback submissions (write-only; the Lambda never reads back). ---
+    feedbackTable.grantWriteData(handlerFn);
 
     // --- Read the Turnstile secret (SSM SecureString) at runtime. ---
     handlerFn.addToRolePolicy(
@@ -165,6 +181,10 @@ function handler(event) {
     new cdk.CfnOutput(this, 'FunctionUrl', {
       value: fnUrl.url,
       description: 'Contact Lambda Function URL → NEXT_PUBLIC_CONTACT_API_URL',
+    });
+    new cdk.CfnOutput(this, 'FeedbackTableName', {
+      value: feedbackTable.tableName,
+      description: 'DynamoDB table holding /feedback survey submissions',
     });
     new cdk.CfnOutput(this, 'SiteBucketName', {
       value: siteBucket.bucketName,

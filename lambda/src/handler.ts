@@ -1,8 +1,9 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { z } from 'zod';
 import { jsonResponse } from './lib/cors.js';
-import { contactSchema, formatZodError } from './lib/validation.js';
+import { contactSchema, feedbackSchema, formatZodError } from './lib/validation.js';
 import { sendContactEmail } from './lib/ses.js';
+import { saveFeedback } from './lib/db.js';
 import { isTurnstileEnabled, verifyTurnstile } from './lib/turnstile.js';
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -56,6 +57,32 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
       }
 
       await sendContactEmail(parsed.data);
+      return jsonResponse(200, { ok: true });
+    }
+
+    if (method === 'POST' && path === '/feedback') {
+      const parsed = parseBody(event, feedbackSchema);
+      if (!parsed.ok) return parsed.response;
+
+      // Honeypot: a bot filled the hidden field. Pretend success, store nothing.
+      if (parsed.data.company.trim() !== '') {
+        return jsonResponse(200, { ok: true });
+      }
+
+      // Cloudflare Turnstile: confirm a real human (only when a secret is configured).
+      if (isTurnstileEnabled()) {
+        const human = await verifyTurnstile(
+          parsed.data.turnstileToken,
+          event.requestContext.http.sourceIp,
+        );
+        if (!human) {
+          return jsonResponse(400, {
+            error: 'Could not verify you’re human. Please refresh the page and try again.',
+          });
+        }
+      }
+
+      await saveFeedback(parsed.data);
       return jsonResponse(200, { ok: true });
     }
 

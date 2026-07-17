@@ -252,6 +252,158 @@ export const ctas = {
   contact: { label: 'Contact me', href: '/contact/' },
 } as const;
 
+// --- Client feedback survey -------------------------------------------------
+// Powers the hidden /feedback page (noindex). Copy lives here; FeedbackForm
+// renders one question per step based on `kind`. Submissions are stored in
+// DynamoDB via POST /feedback — see lambda/src/lib/db.ts.
+
+export type FeedbackScaleQuestion = {
+  kind: 'scale';
+  key: 'difficulty' | 'supported';
+  question: string;
+  help?: string;
+  min: number;
+  max: number;
+  minLabel: string;
+  maxLabel: string;
+};
+
+export type FeedbackTextQuestion = {
+  kind: 'text';
+  key: 'improvements';
+  question: string;
+  help?: string;
+  placeholder?: string;
+};
+
+export type FeedbackChoiceQuestion = {
+  kind: 'single';
+  key: 'source' | 'learningStyle' | 'courseInterest' | 'groupChat';
+  // When set, an "Other" option reveals a free-text field stored under this key.
+  otherKey?: 'sourceOther' | 'learningStyleOther';
+  question: string;
+  help?: string;
+  options: { value: string; label: string }[];
+};
+
+export type FeedbackScheduleQuestion = {
+  kind: 'schedule';
+  key: 'preferredSlots';
+  noteKey: 'convenienceNote';
+  question: string;
+  help?: string;
+  days: { value: string; label: string }[];
+  times: { value: string; label: string }[];
+  notePlaceholder?: string;
+};
+
+export type FeedbackQuestion =
+  | FeedbackScaleQuestion
+  | FeedbackTextQuestion
+  | FeedbackChoiceQuestion
+  | FeedbackScheduleQuestion;
+
+const feedbackDays = [
+  { value: 'mon', label: 'Mon' },
+  { value: 'tue', label: 'Tue' },
+  { value: 'wed', label: 'Wed' },
+  { value: 'thu', label: 'Thu' },
+  { value: 'fri', label: 'Fri' },
+  { value: 'sat', label: 'Sat' },
+  { value: 'sun', label: 'Sun' },
+];
+
+const feedbackTimes = [
+  { value: 'morning', label: 'Morning' },
+  { value: 'afternoon', label: 'Afternoon' },
+  { value: 'evening', label: 'Evening' },
+];
+
+export const feedbackQuestions: FeedbackQuestion[] = [
+  {
+    kind: 'scale',
+    key: 'difficulty',
+    question: 'How would you rate the difficulty level of the class you attended?',
+    min: 1,
+    max: 10,
+    minLabel: 'Very easy',
+    maxLabel: 'Very challenging',
+  },
+  {
+    kind: 'schedule',
+    key: 'preferredSlots',
+    noteKey: 'convenienceNote',
+    question: 'How well do the current class times fit around your week?',
+    help: 'Tap any days and times that would suit you better. Pick as many as you like.',
+    days: feedbackDays,
+    times: feedbackTimes,
+    notePlaceholder: 'Anything else about timing you’d like me to know? (optional)',
+  },
+  {
+    kind: 'text',
+    key: 'improvements',
+    question: 'Is there anything you’d change, or would like more of, in the class?',
+    placeholder: 'Share as much or as little as you like…',
+  },
+  {
+    kind: 'single',
+    key: 'source',
+    otherKey: 'sourceOther',
+    question: 'Where did you find out about this class?',
+    options: [
+      { value: 'instagram', label: 'Instagram' },
+      { value: 'facebook', label: 'Facebook' },
+      { value: 'friend', label: 'A friend / word of mouth' },
+      { value: 'event', label: 'A local event or festival' },
+      { value: 'google', label: 'Google / web search' },
+      { value: 'flyer', label: 'A flyer or poster' },
+      { value: 'other', label: 'Other' },
+    ],
+  },
+  {
+    kind: 'single',
+    key: 'learningStyle',
+    otherKey: 'learningStyleOther',
+    question:
+      'Do you prefer learning tricks and choreography, or more flowy movement and guided exploration?',
+    options: [
+      { value: 'tricks', label: 'Tricks & choreography' },
+      { value: 'flow', label: 'Flowy movement & guided exploration' },
+      { value: 'mix', label: 'A mix of both' },
+      { value: 'other', label: 'Other' },
+    ],
+  },
+  {
+    kind: 'scale',
+    key: 'supported',
+    question: 'How supported did you feel in the class?',
+    min: 0,
+    max: 10,
+    minLabel: 'Not supported',
+    maxLabel: 'Fully supported',
+  },
+  {
+    kind: 'single',
+    key: 'courseInterest',
+    question:
+      'Would you be interested in a weekly hoop course? Each week we’d focus on something new and build up to a final choreography that brings it all together.',
+    options: [
+      { value: 'yes', label: 'Yes, I’d love that' },
+      { value: 'maybe', label: 'Maybe / tell me more' },
+      { value: 'no', label: 'Not for me' },
+    ],
+  },
+  {
+    kind: 'single',
+    key: 'groupChat',
+    question: 'Would you like to join my hula hoop community group chat?',
+    options: [
+      { value: 'yes', label: 'Yes please' },
+      { value: 'no', label: 'No thanks' },
+    ],
+  },
+];
+
 // --- Privacy policy ---------------------------------------------------------
 // Plain-English notice covering the contact form and the Cloudflare Turnstile
 // spam protection. Edit the copy here. NOTE: this is a practical, good-faith
