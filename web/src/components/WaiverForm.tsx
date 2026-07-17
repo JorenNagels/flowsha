@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import PhoneInput from '@/components/PhoneInput';
+import { Spinner } from '@/components/Spinner';
 import { waiverContent, WAIVER_VERSION } from '@/lib/data';
 
 // Lambda Function URLs always carry a trailing slash; strip it so we don't post
@@ -439,8 +440,9 @@ export default function WaiverForm() {
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="inline-flex items-center justify-center rounded-full bg-terracotta px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-terracotta px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
       >
+        {status === 'submitting' && <Spinner className="h-4 w-4 border-2" />}
         {status === 'submitting' ? 'Signing…' : 'Sign & submit waiver'}
       </button>
     </form>

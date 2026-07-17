@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { SignedIn, SignedOut, UserButton, useAuth } from '@clerk/clerk-react';
-import { clerkAppearance } from '@/lib/clerkAppearance';
+import { useAuth } from '@clerk/clerk-react';
+import { LoadingBlock } from '@/components/Spinner';
 
-const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '';
 const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
 
 export type WaiverItem = {
@@ -49,46 +47,10 @@ function yesNo(v?: string): string {
   return '—';
 }
 
-export default function WaiverDashboard() {
-  if (!CLERK_KEY) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-forest px-6">
-        <p className="max-w-sm rounded-2xl border border-cream/10 bg-forest/40 p-6 text-center text-sm text-cream/80">
-          The dashboard isn’t configured yet. Set{' '}
-          <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> to enable it.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <SignedOut>
-        <GoToLogin />
-      </SignedOut>
-      <SignedIn>
-        <DashboardInner />
-      </SignedIn>
-    </>
-  );
-}
-
-// Send signed-out visitors to our own /login page (not Clerk's hosted portal).
-function GoToLogin() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace('/login/');
-  }, [router]);
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-forest text-cream/60">
-      Redirecting to sign in…
-    </div>
-  );
-}
-
 type Status = 'loading' | 'loaded' | 'error';
 
-function DashboardInner() {
+// Content only — Clerk gating + header/nav come from DashboardShell.
+export default function WaiverDashboard() {
   const { getToken } = useAuth();
   const [status, setStatus] = useState<Status>('loading');
   const [items, setItems] = useState<WaiverItem[]>([]);
@@ -130,22 +92,8 @@ function DashboardInner() {
   const chatYes = items.filter((i) => i.groupChat === 'yes').length;
 
   return (
-    <div className="min-h-screen bg-forest text-cream">
-      <header className="flex items-center justify-between border-b border-cream/10 px-6 py-4 sm:px-8">
-        <a href="/" className="font-display text-xl text-cream">
-          Flowsha
-        </a>
-        <div className="flex items-center gap-4">
-          <a href="/dashboard/" className="text-sm text-cream/60 transition-colors hover:text-cream">
-            Feedback
-          </a>
-          <span className="hidden text-sm text-cream/60 sm:inline">Waivers</span>
-          <UserButton appearance={clerkAppearance} />
-        </div>
-      </header>
-
-      <div className="mx-auto max-w-4xl px-6 py-10 sm:px-8">
-        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-[clamp(2rem,5vw,3rem)]">Signed waivers</h1>
             <p className="mt-1 text-cream/70">
@@ -166,6 +114,8 @@ function DashboardInner() {
             </button>
           )}
         </div>
+
+        {status === 'loading' && <LoadingBlock />}
 
         {status === 'error' && (
           <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
@@ -193,8 +143,7 @@ function DashboardInner() {
             </ul>
           </>
         )}
-      </div>
-    </div>
+    </>
   );
 }
 

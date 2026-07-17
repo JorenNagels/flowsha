@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
-import FeedbackDashboard from '@/components/dashboard/FeedbackDashboard';
+import DashboardShell from '@/components/dashboard/DashboardShell';
+import DashboardOverview from '@/components/dashboard/DashboardOverview';
 
-// Private dashboard — kept out of search (also excluded from sitemap.ts and
-// disallowed in robots.ts). The real gate is the authenticated GET /feedback API.
+// Private dashboard overview — kept out of search (also excluded from sitemap.ts
+// and disallowed in robots.ts). The real gate is the authenticated read APIs.
 export const metadata: Metadata = {
   title: 'Dashboard',
   robots: { index: false, follow: false },
 };
 
 export default function DashboardPage() {
-  return <FeedbackDashboard />;
+  return (
+    <DashboardShell>
+      <DashboardOverview />
+    </DashboardShell>
+  );
 }
