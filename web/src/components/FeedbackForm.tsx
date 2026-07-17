@@ -433,11 +433,11 @@ function QuestionStep({
 
       {question.kind === 'scale' && (
         <div>
-          {/* Responsive scale: a 6-col grid on mobile (wraps to two rows with
-              comfortable tap targets), collapsing to a single row of N equal
-              segments from `sm` up. Keeps 0–10 intact per NPS best practice. */}
+          {/* Responsive scale: a 5-col grid on mobile (two even rows of five,
+              e.g. 1–5 / 6–10, with comfortable tap targets), collapsing to a
+              single row of N equal segments from `sm` up. */}
           <div
-            className="grid grid-cols-6 gap-1.5 sm:gap-2 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]"
+            className="grid grid-cols-5 gap-1.5 sm:gap-2 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]"
             style={{ '--cols': question.max - question.min + 1 } as React.CSSProperties}
           >
             {Array.from({ length: question.max - question.min + 1 }, (_, i) => question.min + i).map(

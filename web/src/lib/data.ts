@@ -377,7 +377,7 @@ export const feedbackQuestions: FeedbackQuestion[] = [
     kind: 'scale',
     key: 'supported',
     question: 'How supported did you feel in the class?',
-    min: 0,
+    min: 1,
     max: 10,
     minLabel: 'Not supported',
     maxLabel: 'Fully supported',
