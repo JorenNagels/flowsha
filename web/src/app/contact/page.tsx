@@ -40,7 +40,7 @@ export default function ContactPage() {
         <div className="relative aspect-[16/9] overflow-hidden rounded-3xl bg-forest">
           <ExportedImage
             src={contactImage}
-            alt="Two people learning to spin hoops side by side under teal and purple studio lighting"
+            alt="Osha chatting with hoopers during a relaxed studio session in warm purple light"
             fill
             sizes="(min-width: 768px) 768px, 100vw"
             className="object-cover"

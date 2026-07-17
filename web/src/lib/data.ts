@@ -11,13 +11,13 @@ export const navLinks: NavLink[] = [
 
 // --- Imagery (web-sized files produced by scripts/prep-images.mjs) ---
 export const heroImage = '/images/gallery/hoop-09.jpg';
-export const aboutImage = '/images/gallery/hoop-06.jpg';
+export const aboutImage = '/images/gallery/hoop-29.jpg';
 
 // Per-page feature images to break up the text-heavy pages.
 export const workshopImage = '/images/gallery/hoop-05.jpg';
 export const workshopBannerImage = '/images/gallery/hoop-14.jpg';
-export const shopImage = '/images/gallery/hoop-02.jpg';
-export const contactImage = '/images/gallery/hoop-16.jpg';
+export const shopImage = '/images/gallery/hoop-21.jpg';
+export const contactImage = '/images/gallery/hoop-20.jpg';
 
 export type GalleryImage = { src: string; alt: string };
 
@@ -94,6 +94,70 @@ export const galleryImages: GalleryImage[] = [
     src: '/images/gallery/hoop-19.jpg',
     alt: 'Smiling group of hoopers gathered with their colourful hoops after a class',
   },
+  {
+    src: '/images/gallery/hoop-21.jpg',
+    alt: 'Osha laughing in a park with her arms outstretched, holding four colourful hula hoops',
+  },
+  {
+    src: '/images/gallery/hoop-29.jpg',
+    alt: 'Osha throwing her arms up mid-performance in golden evening light',
+  },
+  {
+    src: '/images/gallery/hoop-25.jpg',
+    alt: 'Osha performing a street hoop act, kicking a leg through a hoop for a seated crowd',
+  },
+  {
+    src: '/images/gallery/hoop-27.jpg',
+    alt: 'Performer leaping through a spinning hoop during a lively street performance',
+  },
+  {
+    src: '/images/gallery/hoop-26.jpg',
+    alt: 'Hoop performer mid-flow in warm golden light at an outdoor street event',
+  },
+  {
+    src: '/images/gallery/hoop-28.jpg',
+    alt: 'Hooper reaching a hoop towards the setting sun across an open field',
+  },
+  {
+    src: '/images/gallery/hoop-22.jpg',
+    alt: 'A stack of brightly coloured handmade Flowsha hoops resting on grass at dusk',
+  },
+  {
+    src: '/images/gallery/hoop-24.jpg',
+    alt: 'Hooper balancing mid-move with a hoop against a rustic white brick wall',
+  },
+  {
+    src: '/images/gallery/hoop-23.jpg',
+    alt: 'Smiling hooper posing with a yellow hoop against a white brick wall',
+  },
+  {
+    src: '/images/gallery/hoop-20.jpg',
+    alt: 'Osha chatting with hoopers during a relaxed studio session in warm purple light',
+  },
+  {
+    src: '/images/gallery/hoop-30.jpg',
+    alt: 'Hooper performing in front of a projected ocean wave and glowing “Flow State” visuals',
+  },
+  {
+    src: '/images/gallery/hoop-31.jpg',
+    alt: 'Flowsha flow performance against a large ocean-wave projection at an evening show',
+  },
+  {
+    src: '/images/gallery/hoop-32.jpg',
+    alt: 'Hooper dancing in white against swirling pink and magenta projected light',
+  },
+  {
+    src: '/images/gallery/hoop-01.jpg',
+    alt: 'Hooper performing in white against a wall of swirling pink projected light',
+  },
+  {
+    src: '/images/gallery/hoop-34.jpg',
+    alt: 'Aerial hoop artist performing inverted in a suspended hoop above a seated audience',
+  },
+  {
+    src: '/images/gallery/hoop-33.jpg',
+    alt: 'Aerial hoop performer suspended upside down as a colourfully lit audience watches',
+  },
 ];
 
 // --- Testimonials ---
@@ -134,11 +198,11 @@ export const testimonials: Testimonial[] = [
 
 // --- About (verbatim from the brand brief, split into paragraphs) ---
 export const aboutParagraphs: string[] = [
-  'Welcome! My name is Osha and I am the face behind Flowsha. What started as a simple curiosity during the uncertainty of the 2020 pandemic soon became a way of moving through life. After first discovering hooping at a festival, I eventually bought my own hoop and began exploring movement as a personal practice, a way to play, create, and stay connected to myself during a time of isolation.',
-  'As my hoop journey grew, so did my love for movement. I spent countless hours exploring new tricks and movement styles, attending classes, connecting with other flow artists, and discovering the joy that comes from moving freely. The more I explored, the more I saw movement’s ability to bring people together, build confidence, spark creativity, and create genuine moments of joy.',
-  'The thing that keeps me coming back to hooping is the feeling of flow itself. For me, flow is that sweet spot between effort and ease. It’s the experience of being fully present, having awareness of your body, responding in the moment, and allowing movement to unfold naturally. It’s playful, grounding, challenging, and deeply rewarding all at once.',
-  'Through Flowsha, I aim to create welcoming spaces where people can experience that feeling for themselves and be comfortable enough to experiment, express themselves and surrender to what feels good, whilst discovering the endless possibilities that these plastic circles have to offer! Whether you’re picking up a hoop for the first time or exploring new ways to move and express yourself, my workshops are designed to be relaxed, supportive, and full of curiosity.',
-  'No experience, coordination, or any pressure to be good required. Just curiosity and a willingness to play.',
+  'Welcome! My name is Osha and I am the face behind Flowsha. In the last 6 years hooping has quickly become a way of moving through life for me. Since trying hula hooping for the first time nearly a decade ago, I slowly began exploring movement as a personal practise, using music and my own emotions to guide my expression and curiosity, and most importantly to connect with myself both physically and mentally.',
+  'Attending hoop classes, events, and gatherings over the years I have seen the incredible joy that the growing hoop community has spread throughout the world and realised I wanted to be a part of sharing that excitement with others and encouraging people to play with these plastic circles that have brought so much meaning to my own life.',
+  'As a former professional dancer and current aerial hoop artist and hula hoop teacher, my obsession with movement and circles never ceases to bore me. My style of teaching is relaxed and playful, utilising music and student’s curiosity to encourage them to explore what feels good and to lean into the types of tricks and movement that delights both their body and brain.',
+  'Through Flowsha, I aim to create welcoming spaces where people can feel free to express themselves, experiment, and learn things they would never expect to with a hula hoop! Whether you’re picking up a hoop for the first time or exploring new ways of moving with your hoop/s, my classes are an open door to new experiences.',
+  'No experience, coordination, or any pressure to be good required. Just curiosity and a willingness to play!',
 ];
 
 // --- Workshops & pricing ---
