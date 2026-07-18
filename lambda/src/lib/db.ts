@@ -39,13 +39,26 @@ export type FeedbackRecord = {
   [key: string]: unknown;
 };
 
+// Scan an entire table, following LastEvaluatedKey so we return every record
+// (a single Scan caps at 1 MB — without this loop, results silently truncate
+// once the table grows past ~1,000 rows). The dashboard sorts + paginates.
+async function scanAll(tableName: string): Promise<Record<string, unknown>[]> {
+  const items: Record<string, unknown>[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const res = await docClient.send(new ScanCommand({ TableName: tableName, ExclusiveStartKey }));
+    if (res.Items) items.push(...res.Items);
+    ExclusiveStartKey = res.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  return items;
+}
+
 // List all submissions for the dashboard. The table has only a partition key
 // (`id`), so a Scan is the way to enumerate; the dashboard sorts by createdAt.
-// At this volume a single Scan page is plenty. Returns [] with no table (local dev).
+// Returns [] with no table (local dev).
 export async function listFeedback(): Promise<FeedbackRecord[]> {
   if (!TABLE_NAME) return [];
-  const res = await docClient.send(new ScanCommand({ TableName: TABLE_NAME }));
-  return (res.Items ?? []) as FeedbackRecord[];
+  return (await scanAll(TABLE_NAME)) as FeedbackRecord[];
 }
 
 // --- Waivers (PAR-Q + Informed Consent) -------------------------------------
@@ -86,10 +99,9 @@ export type WaiverRecord = {
   [key: string]: unknown;
 };
 
-// List all signed waivers for the dashboard. Same single-partition-key Scan
-// pattern as listFeedback; returns [] with no table (local dev).
+// List all signed waivers for the dashboard. Same full-table Scan pattern as
+// listFeedback; returns [] with no table (local dev).
 export async function listWaivers(): Promise<WaiverRecord[]> {
   if (!WAIVER_TABLE_NAME) return [];
-  const res = await docClient.send(new ScanCommand({ TableName: WAIVER_TABLE_NAME }));
-  return (res.Items ?? []) as WaiverRecord[];
+  return (await scanAll(WAIVER_TABLE_NAME)) as WaiverRecord[];
 }

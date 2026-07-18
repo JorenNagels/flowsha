@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { LoadingBlock } from '@/components/Spinner';
+import { FilterFooter, FilterPanel, InfiniteScroll, SearchInput, SegmentedFilter } from './Filters';
+
+// Cards rendered per "page"; keeps the DOM small no matter how many records exist.
+const PAGE_SIZE = 20;
 
 const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
 
@@ -87,9 +91,50 @@ export default function WaiverDashboard() {
     };
   }, [getToken]);
 
-  const minors = items.filter((i) => (i.guardianName ?? '') !== '').length;
-  const photoYes = items.filter((i) => i.photoConsent === 'yes').length;
-  const chatYes = items.filter((i) => i.groupChat === 'yes').length;
+  // --- Search + filters (client-side over the loaded records). ---
+  const [query, setQuery] = useState('');
+  const [fAge, setFAge] = useState(''); // '' | 'minor' | 'adult'
+  const [fPhoto, setFPhoto] = useState('');
+  const [fChat, setFChat] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((i) => {
+      const isMinor = (i.guardianName ?? '') !== '';
+      if (fAge === 'minor' && !isMinor) return false;
+      if (fAge === 'adult' && isMinor) return false;
+      if (fPhoto && i.photoConsent !== fPhoto) return false;
+      if (fChat && i.groupChat !== fChat) return false;
+      if (q) {
+        const hay = [i.fullName, i.email, i.phone, i.address, i.emergencyName, i.guardianName]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [items, query, fAge, fPhoto, fChat]);
+
+  const filtersActive = Boolean(query || fAge || fPhoto || fChat);
+  const clearFilters = () => {
+    setQuery('');
+    setFAge('');
+    setFPhoto('');
+    setFChat('');
+  };
+
+  // Reveal cards in pages; reset to the first page when the query/filters change.
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [query, fAge, fPhoto, fChat]);
+  const showMore = useCallback(() => setVisible((v) => v + PAGE_SIZE), []);
+
+  // Stats reflect the filtered slice (equals all records when no filter).
+  const minors = filtered.filter((i) => (i.guardianName ?? '') !== '').length;
+  const photoYes = filtered.filter((i) => i.photoConsent === 'yes').length;
+  const chatYes = filtered.filter((i) => i.groupChat === 'yes').length;
 
   return (
     <>
@@ -107,7 +152,7 @@ export default function WaiverDashboard() {
           {status === 'loaded' && items.length > 0 && (
             <button
               type="button"
-              onClick={() => downloadCsv(items)}
+              onClick={() => downloadCsv(filtered)}
               className="inline-flex items-center justify-center rounded-full border border-cream/25 px-5 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-mustard hover:text-cream"
             >
               Export CSV
@@ -129,18 +174,76 @@ export default function WaiverDashboard() {
 
         {status === 'loaded' && items.length > 0 && (
           <>
-            <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat label="Waivers" value={String(items.length)} />
-              <Stat label="Under 18" value={String(minors)} />
-              <Stat label="Photo: yes" value={String(photoYes)} />
-              <Stat label="Group chat: yes" value={String(chatYes)} />
-            </div>
+            <FilterPanel>
+              <SearchInput
+                value={query}
+                onChange={setQuery}
+                placeholder="Search name, email, phone or address…"
+              />
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                <SegmentedFilter
+                  label="Age"
+                  value={fAge}
+                  onChange={setFAge}
+                  options={[
+                    { value: 'adult', label: '18+' },
+                    { value: 'minor', label: 'Under 18' },
+                  ]}
+                />
+                <SegmentedFilter
+                  label="Photo"
+                  value={fPhoto}
+                  onChange={setFPhoto}
+                  options={[
+                    { value: 'yes', label: 'Yes' },
+                    { value: 'no', label: 'No' },
+                  ]}
+                />
+                <SegmentedFilter
+                  label="Group chat"
+                  value={fChat}
+                  onChange={setFChat}
+                  options={[
+                    { value: 'yes', label: 'Yes' },
+                    { value: 'no', label: 'No' },
+                  ]}
+                />
+              </div>
+              <FilterFooter
+                matched={filtered.length}
+                total={items.length}
+                noun="waiver"
+                active={filtersActive}
+                onClear={clearFilters}
+              />
+            </FilterPanel>
 
-            <ul className="space-y-4">
-              {items.map((item) => (
-                <SubmissionCard key={item.id} item={item} />
-              ))}
-            </ul>
+            {filtered.length === 0 ? (
+              <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
+                No waivers match your search.
+              </div>
+            ) : (
+              <>
+                <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Stat label="Waivers" value={String(filtered.length)} />
+                  <Stat label="Under 18" value={String(minors)} />
+                  <Stat label="Photo: yes" value={String(photoYes)} />
+                  <Stat label="Group chat: yes" value={String(chatYes)} />
+                </div>
+
+                <ul className="space-y-4">
+                  {filtered.slice(0, visible).map((item) => (
+                    <SubmissionCard key={item.id} item={item} />
+                  ))}
+                </ul>
+                <InfiniteScroll
+                  visible={Math.min(visible, filtered.length)}
+                  total={filtered.length}
+                  noun="waiver"
+                  onMore={showMore}
+                />
+              </>
+            )}
           </>
         )}
     </>

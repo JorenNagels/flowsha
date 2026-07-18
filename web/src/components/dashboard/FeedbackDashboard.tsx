@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { feedbackQuestions } from '@/lib/data';
 import { LoadingBlock } from '@/components/Spinner';
+import { FilterFooter, FilterPanel, InfiniteScroll, SearchInput, SegmentedFilter } from './Filters';
+
+// Cards rendered per "page"; keeps the DOM small no matter how many records exist.
+const PAGE_SIZE = 20;
 
 const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
 
@@ -105,12 +109,64 @@ export default function FeedbackDashboard() {
     };
   }, [getToken]);
 
-  const difficulties = items.map((i) => i.difficulty).filter((n): n is number => typeof n === 'number');
-  const supports = items.map((i) => i.supported).filter((n): n is number => typeof n === 'number');
-  const newsletterCount = items.filter((i) => i.newsletter).length;
-  const courseYes = items.filter((i) => i.courseInterest === 'yes').length;
-  const courseMaybe = items.filter((i) => i.courseInterest === 'maybe').length;
-  const groupYes = items.filter((i) => i.groupChat === 'yes').length;
+  // --- Search + filters (client-side over the loaded records). ---
+  const [query, setQuery] = useState('');
+  const [fCourse, setFCourse] = useState('');
+  const [fGroup, setFGroup] = useState('');
+  const [fNewsletter, setFNewsletter] = useState('');
+  const [fStyle, setFStyle] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((i) => {
+      if (fCourse && i.courseInterest !== fCourse) return false;
+      if (fGroup && i.groupChat !== fGroup) return false;
+      if (fNewsletter === 'yes' && !i.newsletter) return false;
+      if (fStyle && i.learningStyle !== fStyle) return false;
+      if (q) {
+        const hay = [
+          i.firstName,
+          i.lastName,
+          i.email,
+          i.phone,
+          i.improvements,
+          i.convenienceNote,
+          i.sourceOther,
+          i.learningStyleOther,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [items, query, fCourse, fGroup, fNewsletter, fStyle]);
+
+  const filtersActive = Boolean(query || fCourse || fGroup || fNewsletter || fStyle);
+  const clearFilters = () => {
+    setQuery('');
+    setFCourse('');
+    setFGroup('');
+    setFNewsletter('');
+    setFStyle('');
+  };
+
+  // Reveal cards in pages; reset back to the first page whenever the query or
+  // any filter changes so you always start at the top of a new result set.
+  const [visible, setVisible] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [query, fCourse, fGroup, fNewsletter, fStyle]);
+  const showMore = useCallback(() => setVisible((v) => v + PAGE_SIZE), []);
+
+  // Stats + list reflect the filtered slice (equals all records when no filter).
+  const difficulties = filtered.map((i) => i.difficulty).filter((n): n is number => typeof n === 'number');
+  const supports = filtered.map((i) => i.supported).filter((n): n is number => typeof n === 'number');
+  const newsletterCount = filtered.filter((i) => i.newsletter).length;
+  const courseYes = filtered.filter((i) => i.courseInterest === 'yes').length;
+  const courseMaybe = filtered.filter((i) => i.courseInterest === 'maybe').length;
+  const groupYes = filtered.filter((i) => i.groupChat === 'yes').length;
 
   return (
     <>
@@ -128,7 +184,7 @@ export default function FeedbackDashboard() {
           {status === 'loaded' && items.length > 0 && (
             <button
               type="button"
-              onClick={() => downloadCsv(items)}
+              onClick={() => downloadCsv(filtered)}
               className="inline-flex items-center justify-center rounded-full border border-cream/25 px-5 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-mustard hover:text-cream"
             >
               Export CSV
@@ -150,20 +206,86 @@ export default function FeedbackDashboard() {
 
         {status === 'loaded' && items.length > 0 && (
           <>
-            <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-              <Stat label="Responses" value={String(items.length)} />
-              <Stat label="Avg difficulty" value={`${avg(difficulties)}${difficulties.length ? '/10' : ''}`} />
-              <Stat label="Avg support" value={`${avg(supports)}${supports.length ? '/10' : ''}`} />
-              <Stat label="Newsletter" value={String(newsletterCount)} />
-              <Stat label="Course: yes/maybe" value={`${courseYes}/${courseMaybe}`} />
-              <Stat label="Group chat: yes" value={String(groupYes)} />
-            </div>
+            <FilterPanel>
+              <SearchInput
+                value={query}
+                onChange={setQuery}
+                placeholder="Search name, email, phone or notes…"
+              />
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                <SegmentedFilter
+                  label="Course"
+                  value={fCourse}
+                  onChange={setFCourse}
+                  options={[
+                    { value: 'yes', label: 'Yes' },
+                    { value: 'maybe', label: 'Maybe' },
+                    { value: 'no', label: 'No' },
+                  ]}
+                />
+                <SegmentedFilter
+                  label="Group chat"
+                  value={fGroup}
+                  onChange={setFGroup}
+                  options={[
+                    { value: 'yes', label: 'Yes' },
+                    { value: 'no', label: 'No' },
+                  ]}
+                />
+                <SegmentedFilter
+                  label="Newsletter"
+                  value={fNewsletter}
+                  onChange={setFNewsletter}
+                  options={[{ value: 'yes', label: 'Opted in' }]}
+                />
+                <SegmentedFilter
+                  label="Style"
+                  value={fStyle}
+                  onChange={setFStyle}
+                  options={[
+                    { value: 'tricks', label: 'Tricks' },
+                    { value: 'flow', label: 'Flow' },
+                    { value: 'mix', label: 'Mix' },
+                  ]}
+                />
+              </div>
+              <FilterFooter
+                matched={filtered.length}
+                total={items.length}
+                noun="response"
+                active={filtersActive}
+                onClear={clearFilters}
+              />
+            </FilterPanel>
 
-            <ul className="space-y-4">
-              {items.map((item) => (
-                <SubmissionCard key={item.id} item={item} />
-              ))}
-            </ul>
+            {filtered.length === 0 ? (
+              <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
+                No responses match your search.
+              </div>
+            ) : (
+              <>
+                <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                  <Stat label="Responses" value={String(filtered.length)} />
+                  <Stat label="Avg difficulty" value={`${avg(difficulties)}${difficulties.length ? '/10' : ''}`} />
+                  <Stat label="Avg support" value={`${avg(supports)}${supports.length ? '/10' : ''}`} />
+                  <Stat label="Newsletter" value={String(newsletterCount)} />
+                  <Stat label="Course: yes/maybe" value={`${courseYes}/${courseMaybe}`} />
+                  <Stat label="Group chat: yes" value={String(groupYes)} />
+                </div>
+
+                <ul className="space-y-4">
+                  {filtered.slice(0, visible).map((item) => (
+                    <SubmissionCard key={item.id} item={item} />
+                  ))}
+                </ul>
+                <InfiniteScroll
+                  visible={Math.min(visible, filtered.length)}
+                  total={filtered.length}
+                  noun="response"
+                  onMore={showMore}
+                />
+              </>
+            )}
           </>
         )}
     </>
