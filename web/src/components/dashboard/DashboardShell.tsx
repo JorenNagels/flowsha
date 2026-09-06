@@ -12,6 +12,8 @@ const NAV_LINKS = [
   { href: '/dashboard/', label: 'Overview' },
   { href: '/dashboard/feedback/', label: 'Feedback' },
   { href: '/dashboard/waivers/', label: 'Waivers' },
+  { href: '/dashboard/orders/', label: 'Orders' },
+  { href: '/dashboard/shop/', label: 'Hoops' },
 ];
 
 // Trailing-slash-insensitive compare so `/dashboard` and `/dashboard/` match.
@@ -28,8 +30,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return (
       <div className="flex min-h-screen items-center justify-center bg-forest px-6">
         <p className="max-w-sm rounded-2xl border border-cream/10 bg-forest/40 p-6 text-center text-sm text-cream/80">
-          The dashboard isn’t configured yet. Set{' '}
-          <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> to enable it.
+          The dashboard isn’t configured yet. Set <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> to
+          enable it.
         </p>
       </div>
     );
@@ -79,7 +81,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
       aria-current={active ? 'page' : undefined}
       className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors ${
         active
-          ? 'bg-mustard/15 text-cream'
+          ? 'bg-terracotta-light/15 text-cream'
           : 'text-cream/60 hover:bg-cream/5 hover:text-cream'
       }`}
     >

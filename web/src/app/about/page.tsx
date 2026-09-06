@@ -21,7 +21,7 @@ export default function AboutPage() {
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <FadeIn
           as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
         >
           About me
         </FadeIn>

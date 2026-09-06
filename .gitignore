@@ -36,3 +36,7 @@ infrastructure/cdk.context.json
 # IDE
 .idea/
 .vscode/
+
+# Local tooling — Claude Code settings/worktrees and direnv
+.claude/
+.envrc

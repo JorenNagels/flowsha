@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm ci
@@ -59,7 +59,7 @@ jobs:
       - name: Deploy assets to S3 (immutable, 1yr cache)
         run: |
           aws s3 sync web/out/ s3://${{ vars.S3_BUCKET }}/ \
-            --exclude "*.html" \
+            --exclude "*.html" --exclude "*.txt" --exclude "*.xml" \
             --cache-control "public, max-age=31536000, immutable" \
             --delete
 

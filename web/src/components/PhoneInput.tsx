@@ -92,7 +92,7 @@ export default function PhoneInput({ value, onChange }: Props) {
 
   return (
     <div ref={rootRef} className="relative">
-      <div className="flex items-stretch rounded-xl border border-cream/15 bg-forest/40 transition focus-within:border-mustard focus-within:ring-2 focus-within:ring-mustard/20">
+      <div className="flex items-stretch rounded-xl border border-cream/15 bg-forest/40 transition focus-within:border-terracotta-light focus-within:ring-2 focus-within:ring-terracotta-light/20">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -142,7 +142,7 @@ export default function PhoneInput({ value, onChange }: Props) {
               }}
               onKeyDown={onSearchKeyDown}
               placeholder="Search country…"
-              className="w-full rounded-lg border border-cream/15 bg-forest/50 px-3 py-2 text-sm text-cream placeholder-cream/40 outline-none focus:border-mustard"
+              className="w-full rounded-lg border border-cream/15 bg-forest/50 px-3 py-2 text-sm text-cream placeholder-cream/40 outline-none focus:border-terracotta-light"
             />
           </div>
           <ul ref={listRef} role="listbox" className="max-h-60 overflow-y-auto pb-1">

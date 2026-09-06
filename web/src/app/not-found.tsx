@@ -17,14 +17,14 @@ export default function NotFound() {
           className="relative mb-10 flex h-44 w-44 items-center justify-center"
         >
           <span className="absolute inset-0 rounded-full border-[6px] border-cream/10" />
-          <span className="absolute inset-0 animate-spin rounded-full border-[6px] border-transparent border-t-mustard [animation-duration:3s]" />
-          <span className="font-display text-5xl text-mustard">404</span>
+          <span className="absolute inset-0 animate-spin rounded-full border-[6px] border-transparent border-t-terracotta [animation-duration:3s]" />
+          <span className="font-display text-5xl text-terracotta">404</span>
         </div>
       </FadeIn>
 
       <FadeIn
         as="p"
-        className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+        className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
       >
         Page not found
       </FadeIn>

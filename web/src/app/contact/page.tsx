@@ -20,7 +20,7 @@ export default function ContactPage() {
       <JsonLd data={breadcrumbJsonLd('Contact', '/contact/')} />
       <FadeIn
         as="p"
-        className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+        className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
       >
         Contact
       </FadeIn>
@@ -30,7 +30,7 @@ export default function ContactPage() {
       <FadeIn as="p" className="mb-10 text-lg text-cream/85">
         Booking a workshop, enquiring about a performance, or after a handmade hoop? Fill in the
         form below or email{' '}
-        <a href={`mailto:${siteConfig.email}`} className="text-mustard underline">
+        <a href={`mailto:${siteConfig.email}`} className="text-terracotta-light underline">
           {siteConfig.email}
         </a>
         .

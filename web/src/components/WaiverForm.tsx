@@ -1,45 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { apiPost, errorMessage } from '@/lib/api';
+import { useTurnstile } from '@/hooks/useTurnstile';
 import PhoneInput from '@/components/PhoneInput';
 import { Spinner } from '@/components/Spinner';
 import { waiverContent, WAIVER_VERSION } from '@/lib/data';
 
-// Lambda Function URLs always carry a trailing slash; strip it so we don't post
-// to `…on.aws//waiver` (which the handler's route table 404s on).
-const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
-
-// Cloudflare Turnstile site key (public). When unset (e.g. local dev with no key),
-// the widget is skipped entirely and the form posts with an empty token — the
-// Lambda only enforces verification when its secret is configured.
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
-
 type Status = 'idle' | 'submitting' | 'success' | 'error';
-
-// Minimal typing for the Turnstile global injected by the api.js script.
-interface TurnstileApi {
-  render: (
-    el: HTMLElement,
-    opts: {
-      sitekey: string;
-      callback: (token: string) => void;
-      'expired-callback'?: () => void;
-      'error-callback'?: () => void;
-    },
-  ) => string;
-  reset: (widgetId?: string) => void;
-  remove: (widgetId?: string) => void;
-}
-
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-    onTurnstileLoad?: () => void;
-  }
-}
-
-const TURNSTILE_SRC =
-  'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
 
 type WaiverState = {
   fullName: string;
@@ -100,12 +68,12 @@ export default function WaiverForm() {
   const [form, setForm] = useState<WaiverState>(EMPTY);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string>('');
-  const [signedCopy, setSignedCopy] = useState<{ state: WaiverState; signedAt: string } | null>(null);
+  const [signedCopy, setSignedCopy] = useState<{ state: WaiverState; signedAt: string } | null>(
+    null,
+  );
 
   const honeypotRef = useRef<HTMLInputElement>(null);
-  const widgetRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string>('');
-  const tokenRef = useRef<string>('');
+  const turnstile = useTurnstile();
 
   const age = ageFromDob(form.dateOfBirth);
   const isMinor = age !== null && age < 18;
@@ -114,54 +82,13 @@ export default function WaiverForm() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
-  // Load + render the invisible Turnstile widget once on mount.
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return;
-
-    function renderWidget() {
-      if (!window.turnstile || !widgetRef.current || widgetIdRef.current) return;
-      widgetIdRef.current = window.turnstile.render(widgetRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        callback: (token) => {
-          tokenRef.current = token;
-        },
-        'expired-callback': () => {
-          tokenRef.current = '';
-          window.turnstile?.reset(widgetIdRef.current);
-        },
-        'error-callback': () => {
-          tokenRef.current = '';
-        },
-      });
-    }
-
-    window.onTurnstileLoad = renderWidget;
-
-    if (window.turnstile) {
-      renderWidget();
-    } else if (!document.querySelector(`script[src="${TURNSTILE_SRC}"]`)) {
-      const script = document.createElement('script');
-      script.src = TURNSTILE_SRC;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (window.turnstile && widgetIdRef.current) {
-        window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = '';
-      }
-    };
-  }, []);
-
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    if (TURNSTILE_SITE_KEY && !tokenRef.current) {
+    if (turnstile.enabled && !turnstile.getToken()) {
       setStatus('error');
       setError('Still verifying you’re human — please wait a moment and try again.');
-      if (window.turnstile && widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+      turnstile.reset();
       return;
     }
 
@@ -171,41 +98,32 @@ export default function WaiverForm() {
     const payload = {
       ...form,
       company: honeypotRef.current?.value ?? '', // honeypot
-      turnstileToken: tokenRef.current,
+      turnstileToken: turnstile.getToken(),
     };
 
     try {
-      const res = await fetch(`${API_URL}/waiver`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Something went wrong. Please try again.');
-      }
+      await apiPost('/waiver', payload);
       setSignedCopy({ state: form, signedAt: new Date().toISOString() });
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(err));
     } finally {
-      tokenRef.current = '';
-      if (window.turnstile && widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+      turnstile.reset();
     }
   }
 
   if (status === 'success' && signedCopy) {
     return (
       <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center">
-        <p className="font-display text-2xl text-mustard">Thank you! 🌀</p>
+        <p className="font-display text-2xl text-terracotta">Thank you! 🌀</p>
         <p className="mt-2 text-cream/80">
           Your waiver has been signed and sent to Osha. See you in class!
         </p>
         <button
           type="button"
           onClick={() => downloadCopy(signedCopy.state, signedCopy.signedAt)}
-          className="mt-6 inline-flex items-center justify-center rounded-full border border-cream/25 px-6 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-mustard hover:text-cream"
+          className="mt-6 inline-flex items-center justify-center rounded-full border border-cream/25 px-6 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-terracotta-light hover:text-cream"
         >
           Download your copy
         </button>
@@ -214,7 +132,7 @@ export default function WaiverForm() {
   }
 
   const field =
-    'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-mustard focus:ring-2 focus:ring-mustard/20';
+    'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-terracotta-light focus:ring-2 focus:ring-terracotta-light/20';
   const labelText = 'mb-1.5 block text-sm font-semibold text-cream/80';
 
   return (
@@ -316,7 +234,8 @@ export default function WaiverForm() {
       <Clause heading="Medical representation" body={waiverContent.medicalRepresentation}>
         <label className="block">
           <span className={labelText}>
-            Any medical conditions or concerns to share? <span className="text-cream/50">(optional)</span>
+            Any medical conditions or concerns to share?{' '}
+            <span className="text-cream/50">(optional)</span>
           </span>
           <textarea
             maxLength={3000}
@@ -371,8 +290,8 @@ export default function WaiverForm() {
         />
 
         {isMinor ? (
-          <div className="space-y-5 rounded-xl border border-mustard/30 bg-mustard/5 p-4">
-            <p className="text-sm text-mustard">
+          <div className="space-y-5 rounded-xl border border-terracotta-light/30 bg-terracotta-light/5 p-4">
+            <p className="text-sm text-terracotta-light">
               This participant is under 18, so a parent or guardian must sign on their behalf.
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
@@ -425,22 +344,24 @@ export default function WaiverForm() {
           </label>
         )}
         <p className="text-xs text-cream/50">
-          Signing electronically records the date, your IP address and this form’s version
-          ({WAIVER_VERSION}) as proof of consent.
+          Signing electronically records the date, your IP address and this form’s version (
+          {WAIVER_VERSION}) as proof of consent.
         </p>
       </fieldset>
 
       {/* Invisible Cloudflare Turnstile widget — renders nothing visible. */}
-      <div ref={widgetRef} />
+      <div ref={turnstile.widgetRef} />
 
       {status === 'error' && (
-        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
+        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta-light">
+          {error}
+        </p>
       )}
 
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="inline-flex items-center justify-center gap-2 rounded-full bg-terracotta px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-full bg-terracotta-deep px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === 'submitting' && <Spinner className="h-4 w-4 border-2" />}
         {status === 'submitting' ? 'Signing…' : 'Sign & submit waiver'}
@@ -485,7 +406,7 @@ function Checkbox({
         required
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 h-5 w-5 shrink-0 accent-mustard"
+        className="mt-1 h-5 w-5 shrink-0 accent-terracotta"
       />
       <span className="text-sm">{label}</span>
     </label>
@@ -512,7 +433,7 @@ function YesNo({
             key={opt}
             className={`flex cursor-pointer items-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold transition-colors ${
               value === opt
-                ? 'border-mustard bg-mustard/15 text-cream'
+                ? 'border-terracotta-light bg-terracotta-light/15 text-cream'
                 : 'border-cream/20 text-cream/70 hover:border-cream/40'
             }`}
           >

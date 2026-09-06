@@ -7,7 +7,7 @@ export default function Testimonials() {
       <div className="mx-auto max-w-6xl">
         <FadeIn
           as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
         >
           Kind words
         </FadeIn>
@@ -19,13 +19,13 @@ export default function Testimonials() {
           {testimonials.map((t) => (
             <FadeIn key={t.name}>
               <figure className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7">
-                <span aria-hidden className="font-display text-4xl leading-none text-mustard">
+                <span aria-hidden className="font-display text-4xl leading-none text-terracotta">
                   “
                 </span>
                 <blockquote className="mt-2 flex-1 text-[0.97rem] leading-relaxed text-cream/85">
                   {t.quote}
                 </blockquote>
-                <figcaption className="mt-5 font-display text-lg text-mustard">
+                <figcaption className="mt-5 font-display text-lg text-terracotta-light">
                   — {t.name}
                 </figcaption>
               </figure>

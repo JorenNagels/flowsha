@@ -35,7 +35,7 @@ export default function PerformancesPage() {
       <section className="mx-auto max-w-6xl px-6 py-16 sm:px-8">
         <FadeIn
           as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
         >
           Performances
         </FadeIn>
@@ -50,7 +50,7 @@ export default function PerformancesPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           {performanceTypes.map((p) => (
             <FadeIn key={p.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-mustard/50">
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-terracotta-light/50">
                 <h2 className="font-display text-xl text-cream">{p.title}</h2>
                 <p className="mt-2 text-cream/80">{p.blurb}</p>
               </div>

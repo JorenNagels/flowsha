@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { LogoMark } from './Logo';
-import { navLinks } from '@/lib/data';
+import { TRADING_ADDRESS, navLinks } from '@/lib/data';
 import { siteConfig } from '@/lib/site';
 
 function InstagramIcon() {
@@ -21,17 +21,23 @@ export default function Footer() {
             aria-label={`${siteConfig.name} home`}
             className="group inline-flex items-center gap-2.5"
           >
-            <LogoMark className="h-9 w-9 text-mustard transition-transform duration-700 group-hover:rotate-180" />
+            {/* Cream tile so the green figure stays visible on the dark footer — interim,
+                pending the /1…/5 chrome trials. */}
+            <span className="grid h-[68px] w-[68px] shrink-0 place-items-center rounded-2xl bg-cream">
+              <LogoMark className="h-[52px] w-auto transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105" />
+            </span>
             <span className="font-display text-2xl">{siteConfig.name}</span>
           </Link>
-          <p className="mt-3 font-script text-2xl italic text-mustard">{siteConfig.tagline}</p>
+          <p className="mt-3 font-script text-2xl italic text-terracotta-light">
+            {siteConfig.tagline}
+          </p>
           <p className="mt-1 text-sm uppercase tracking-[0.18em] text-cream/70">
             {siteConfig.offerings}
           </p>
         </div>
 
         <nav aria-label="Footer" className="md:justify-self-center">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-mustard">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-terracotta-light">
             Explore
           </h2>
           <ul className="space-y-2">
@@ -39,7 +45,7 @@ export default function Footer() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="text-cream/85 transition-colors hover:text-mustard"
+                  className="text-cream/85 transition-colors hover:text-terracotta-light"
                 >
                   {link.label}
                 </Link>
@@ -49,7 +55,7 @@ export default function Footer() {
         </nav>
 
         <div className="md:justify-self-end">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-mustard">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-terracotta-light">
             Find me
           </h2>
           <div className="flex items-center gap-3">
@@ -58,14 +64,14 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${siteConfig.name} on Instagram`}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-cream/30 transition-colors hover:border-mustard hover:text-mustard"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-cream/30 transition-colors hover:border-terracotta-light hover:text-terracotta-light"
             >
               <InstagramIcon />
             </a>
           </div>
           <a
             href={`mailto:${siteConfig.email}`}
-            className="mt-4 inline-block text-cream/85 transition-colors hover:text-mustard"
+            className="mt-4 inline-block text-cream/85 transition-colors hover:text-terracotta-light"
           >
             {siteConfig.email}
           </a>
@@ -78,11 +84,24 @@ export default function Footer() {
       <div className="border-t border-cream/15">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 py-5 text-xs text-cream/60 sm:flex-row sm:justify-between sm:px-8">
           <p>
-            © {new Date().getFullYear()} {siteConfig.name}.
+            © {new Date().getFullYear()} {siteConfig.name} · {TRADING_ADDRESS}
           </p>
-          <Link href="/privacy/" className="transition-colors hover:text-mustard">
-            Privacy policy
-          </Link>
+          {/* Trader identity + the consumer-facing policies must be reachable from
+              every page, not buried in the checkout. */}
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <Link href="/privacy/" className="transition-colors hover:text-terracotta-light">
+              Privacy
+            </Link>
+            <Link href="/terms/" className="transition-colors hover:text-terracotta-light">
+              Terms
+            </Link>
+            <Link href="/returns/" className="transition-colors hover:text-terracotta-light">
+              Returns
+            </Link>
+            <Link href="/delivery/" className="transition-colors hover:text-terracotta-light">
+              Delivery
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>

@@ -4,10 +4,10 @@ import type { ReactNode } from 'react';
 type Variant = 'primary' | 'gold' | 'outline' | 'light' | 'lightOutline';
 
 const styles: Record<Variant, string> = {
-  primary: 'bg-terracotta text-cream hover:bg-clay',
-  gold: 'bg-mustard text-forest-dark hover:bg-mustard/90',
+  primary: 'bg-terracotta-deep text-cream hover:bg-clay',
+  gold: 'bg-terracotta-light text-forest-dark hover:bg-terracotta-light/90',
   outline: 'border border-cream/40 text-cream hover:bg-cream hover:text-forest-dark',
-  light: 'bg-cream text-forest hover:bg-mustard hover:text-ink',
+  light: 'bg-cream text-forest hover:bg-terracotta-light hover:text-ink',
   lightOutline: 'border border-cream/70 text-cream hover:bg-cream hover:text-forest',
 };
 

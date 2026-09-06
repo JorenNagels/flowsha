@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { LoadingBlock } from '@/components/Spinner';
+import { SkeletonCardList, SkeletonGroup, SkeletonStats } from '@/components/Skeleton';
+import { apiGet, errorMessage } from '@/lib/api';
 import { FilterFooter, FilterPanel, InfiniteScroll, SearchInput, SegmentedFilter } from './Filters';
 
 // Cards rendered per "page"; keeps the DOM small no matter how many records exist.
 const PAGE_SIZE = 20;
-
-const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
 
 export type WaiverItem = {
   id: string;
@@ -65,14 +64,7 @@ export default function WaiverDashboard() {
     (async () => {
       try {
         const token = await getToken();
-        const res = await fetch(`${API_URL}/waiver`, {
-          headers: { Authorization: `Bearer ${token ?? ''}` },
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Request failed (${res.status}).`);
-        }
-        const data = await res.json();
+        const data = await apiGet<{ items: WaiverItem[] }>('/waiver', token);
         const list: WaiverItem[] = Array.isArray(data.items) ? data.items : [];
         list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)); // newest first
         if (!cancelled) {
@@ -81,7 +73,7 @@ export default function WaiverDashboard() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Something went wrong.');
+          setError(errorMessage(err, 'Something went wrong.'));
           setStatus('error');
         }
       }
@@ -139,113 +131,122 @@ export default function WaiverDashboard() {
   return (
     <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-[clamp(2rem,5vw,3rem)]">Signed waivers</h1>
-            <p className="mt-1 text-cream/70">
-              {status === 'loaded'
-                ? `${items.length} ${items.length === 1 ? 'waiver' : 'waivers'}`
-                : status === 'loading'
-                  ? 'Loading…'
-                  : 'Could not load waivers'}
-            </p>
-          </div>
-          {status === 'loaded' && items.length > 0 && (
-            <button
-              type="button"
-              onClick={() => downloadCsv(filtered)}
-              className="inline-flex items-center justify-center rounded-full border border-cream/25 px-5 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-mustard hover:text-cream"
-            >
-              Export CSV
-            </button>
-          )}
+        <div>
+          <h1 className="font-display text-[clamp(2rem,5vw,3rem)]">Signed waivers</h1>
+          <p className="mt-1 text-cream/70">
+            {status === 'loaded'
+              ? `${items.length} ${items.length === 1 ? 'waiver' : 'waivers'}`
+              : status === 'loading'
+                ? 'Loading…'
+                : 'Could not load waivers'}
+          </p>
         </div>
-
-        {status === 'loading' && <LoadingBlock />}
-
-        {status === 'error' && (
-          <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
-        )}
-
-        {status === 'loaded' && items.length === 0 && (
-          <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
-            No waivers yet. Signed forms will appear here as they come in.
-          </div>
-        )}
-
         {status === 'loaded' && items.length > 0 && (
-          <>
-            <FilterPanel>
-              <SearchInput
-                value={query}
-                onChange={setQuery}
-                placeholder="Search name, email, phone or address…"
-              />
-              <div className="flex flex-wrap gap-x-6 gap-y-3">
-                <SegmentedFilter
-                  label="Age"
-                  value={fAge}
-                  onChange={setFAge}
-                  options={[
-                    { value: 'adult', label: '18+' },
-                    { value: 'minor', label: 'Under 18' },
-                  ]}
-                />
-                <SegmentedFilter
-                  label="Photo"
-                  value={fPhoto}
-                  onChange={setFPhoto}
-                  options={[
-                    { value: 'yes', label: 'Yes' },
-                    { value: 'no', label: 'No' },
-                  ]}
-                />
-                <SegmentedFilter
-                  label="Group chat"
-                  value={fChat}
-                  onChange={setFChat}
-                  options={[
-                    { value: 'yes', label: 'Yes' },
-                    { value: 'no', label: 'No' },
-                  ]}
-                />
-              </div>
-              <FilterFooter
-                matched={filtered.length}
-                total={items.length}
-                noun="waiver"
-                active={filtersActive}
-                onClear={clearFilters}
-              />
-            </FilterPanel>
-
-            {filtered.length === 0 ? (
-              <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
-                No waivers match your search.
-              </div>
-            ) : (
-              <>
-                <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <Stat label="Waivers" value={String(filtered.length)} />
-                  <Stat label="Under 18" value={String(minors)} />
-                  <Stat label="Photo: yes" value={String(photoYes)} />
-                  <Stat label="Group chat: yes" value={String(chatYes)} />
-                </div>
-
-                <ul className="space-y-4">
-                  {filtered.slice(0, visible).map((item) => (
-                    <SubmissionCard key={item.id} item={item} />
-                  ))}
-                </ul>
-                <InfiniteScroll
-                  visible={Math.min(visible, filtered.length)}
-                  total={filtered.length}
-                  noun="waiver"
-                  onMore={showMore}
-                />
-              </>
-            )}
-          </>
+          <button
+            type="button"
+            onClick={() => downloadCsv(filtered)}
+            className="inline-flex items-center justify-center rounded-full border border-cream/25 px-5 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-terracotta-light hover:text-cream"
+          >
+            Export CSV
+          </button>
         )}
+      </div>
+
+      {status === 'loading' && (
+        <SkeletonGroup label="Loading waivers…">
+          <SkeletonStats />
+          <div className="mt-6">
+            <SkeletonCardList count={5} />
+          </div>
+        </SkeletonGroup>
+      )}
+
+      {status === 'error' && (
+        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta-light">
+          {error}
+        </p>
+      )}
+
+      {status === 'loaded' && items.length === 0 && (
+        <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
+          No waivers yet. Signed forms will appear here as they come in.
+        </div>
+      )}
+
+      {status === 'loaded' && items.length > 0 && (
+        <>
+          <FilterPanel>
+            <SearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="Search name, email, phone or address…"
+            />
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              <SegmentedFilter
+                label="Age"
+                value={fAge}
+                onChange={setFAge}
+                options={[
+                  { value: 'adult', label: '18+' },
+                  { value: 'minor', label: 'Under 18' },
+                ]}
+              />
+              <SegmentedFilter
+                label="Photo"
+                value={fPhoto}
+                onChange={setFPhoto}
+                options={[
+                  { value: 'yes', label: 'Yes' },
+                  { value: 'no', label: 'No' },
+                ]}
+              />
+              <SegmentedFilter
+                label="Group chat"
+                value={fChat}
+                onChange={setFChat}
+                options={[
+                  { value: 'yes', label: 'Yes' },
+                  { value: 'no', label: 'No' },
+                ]}
+              />
+            </div>
+            <FilterFooter
+              matched={filtered.length}
+              total={items.length}
+              noun="waiver"
+              active={filtersActive}
+              onClear={clearFilters}
+            />
+          </FilterPanel>
+
+          {filtered.length === 0 ? (
+            <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
+              No waivers match your search.
+            </div>
+          ) : (
+            <>
+              <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Stat label="Waivers" value={String(filtered.length)} />
+                <Stat label="Under 18" value={String(minors)} />
+                <Stat label="Photo: yes" value={String(photoYes)} />
+                <Stat label="Group chat: yes" value={String(chatYes)} />
+              </div>
+
+              <ul className="space-y-4">
+                {filtered.slice(0, visible).map((item) => (
+                  <SubmissionCard key={item.id} item={item} />
+                ))}
+              </ul>
+              <InfiniteScroll
+                visible={Math.min(visible, filtered.length)}
+                total={filtered.length}
+                noun="waiver"
+                onMore={showMore}
+              />
+            </>
+          )}
+        </>
+      )}
     </>
   );
 }
@@ -253,7 +254,7 @@ export default function WaiverDashboard() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-cream/10 bg-forest/40 p-4">
-      <div className="font-display text-2xl text-mustard">{value}</div>
+      <div className="font-display text-2xl text-terracotta">{value}</div>
       <div className="mt-0.5 text-xs uppercase tracking-wide text-cream/55">{label}</div>
     </div>
   );
@@ -278,7 +279,7 @@ function SubmissionCard({ item }: { item: WaiverItem }) {
         <h2 className="font-display text-xl text-cream">
           {name}
           {isMinor && (
-            <span className="ml-2 rounded-full bg-mustard/20 px-2 py-0.5 align-middle text-xs text-mustard">
+            <span className="ml-2 rounded-full bg-terracotta-light/20 px-2 py-0.5 align-middle text-xs text-terracotta-light">
               Under 18
             </span>
           )}

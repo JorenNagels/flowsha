@@ -61,12 +61,12 @@ export default function HomePage() {
         <div className="grid gap-6 md:grid-cols-3">
           {offerings.map((o) => (
             <FadeIn key={o.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-8 transition-colors hover:border-mustard/50">
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-8 transition-colors hover:border-terracotta-light/50">
                 <h2 className="font-display text-2xl text-cream">{o.title}</h2>
                 <p className="mt-3 flex-1 text-cream/70">{o.blurb}</p>
                 <Link
                   href={o.href}
-                  className="mt-5 inline-flex items-center gap-1 font-semibold text-mustard transition-all hover:gap-2"
+                  className="mt-5 inline-flex items-center gap-1 font-semibold text-terracotta-light transition-all hover:gap-2"
                 >
                   {o.cta} <span aria-hidden>→</span>
                 </Link>
@@ -80,7 +80,7 @@ export default function HomePage() {
       <section className="bg-forest/30 px-6 py-20 text-cream sm:px-8">
         <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
           <FadeIn>
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-forest ring-1 ring-mustard/30">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-forest ring-1 ring-terracotta-light/30">
               <ExportedImage
                 src={aboutImage}
                 alt="Osha, founder of Flowsha, arms raised mid-performance in golden evening light"
@@ -93,7 +93,7 @@ export default function HomePage() {
           <div>
             <FadeIn
               as="p"
-              className="text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+              className="text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
             >
               Meet your guide
             </FadeIn>
@@ -119,7 +119,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 sm:px-8">
           <FadeIn
             as="p"
-            className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+            className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
           >
             In the room
           </FadeIn>

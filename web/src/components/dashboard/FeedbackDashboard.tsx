@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { feedbackQuestions } from '@/lib/data';
-import { LoadingBlock } from '@/components/Spinner';
+import { SkeletonCardList, SkeletonGroup, SkeletonStats } from '@/components/Skeleton';
+import { apiGet, errorMessage } from '@/lib/api';
 import { FilterFooter, FilterPanel, InfiniteScroll, SearchInput, SegmentedFilter } from './Filters';
 
 // Cards rendered per "page"; keeps the DOM small no matter how many records exist.
 const PAGE_SIZE = 20;
-
-const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
 
 export type FeedbackItem = {
   id: string;
@@ -83,14 +82,7 @@ export default function FeedbackDashboard() {
     (async () => {
       try {
         const token = await getToken();
-        const res = await fetch(`${API_URL}/feedback`, {
-          headers: { Authorization: `Bearer ${token ?? ''}` },
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || `Request failed (${res.status}).`);
-        }
-        const data = await res.json();
+        const data = await apiGet<{ items: FeedbackItem[] }>('/feedback', token);
         const list: FeedbackItem[] = Array.isArray(data.items) ? data.items : [];
         list.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)); // newest first
         if (!cancelled) {
@@ -99,7 +91,7 @@ export default function FeedbackDashboard() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Something went wrong.');
+          setError(errorMessage(err, 'Something went wrong.'));
           setStatus('error');
         }
       }
@@ -161,8 +153,12 @@ export default function FeedbackDashboard() {
   const showMore = useCallback(() => setVisible((v) => v + PAGE_SIZE), []);
 
   // Stats + list reflect the filtered slice (equals all records when no filter).
-  const difficulties = filtered.map((i) => i.difficulty).filter((n): n is number => typeof n === 'number');
-  const supports = filtered.map((i) => i.supported).filter((n): n is number => typeof n === 'number');
+  const difficulties = filtered
+    .map((i) => i.difficulty)
+    .filter((n): n is number => typeof n === 'number');
+  const supports = filtered
+    .map((i) => i.supported)
+    .filter((n): n is number => typeof n === 'number');
   const newsletterCount = filtered.filter((i) => i.newsletter).length;
   const courseYes = filtered.filter((i) => i.courseInterest === 'yes').length;
   const courseMaybe = filtered.filter((i) => i.courseInterest === 'maybe').length;
@@ -171,123 +167,138 @@ export default function FeedbackDashboard() {
   return (
     <>
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="font-display text-[clamp(2rem,5vw,3rem)]">Class feedback</h1>
-            <p className="mt-1 text-cream/70">
-              {status === 'loaded'
-                ? `${items.length} ${items.length === 1 ? 'response' : 'responses'}`
-                : status === 'loading'
-                  ? 'Loading…'
-                  : 'Could not load responses'}
-            </p>
-          </div>
-          {status === 'loaded' && items.length > 0 && (
-            <button
-              type="button"
-              onClick={() => downloadCsv(filtered)}
-              className="inline-flex items-center justify-center rounded-full border border-cream/25 px-5 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-mustard hover:text-cream"
-            >
-              Export CSV
-            </button>
-          )}
+        <div>
+          <h1 className="font-display text-[clamp(2rem,5vw,3rem)]">Class feedback</h1>
+          <p className="mt-1 text-cream/70">
+            {status === 'loaded'
+              ? `${items.length} ${items.length === 1 ? 'response' : 'responses'}`
+              : status === 'loading'
+                ? 'Loading…'
+                : 'Could not load responses'}
+          </p>
         </div>
-
-        {status === 'loading' && <LoadingBlock />}
-
-        {status === 'error' && (
-          <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
-        )}
-
-        {status === 'loaded' && items.length === 0 && (
-          <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
-            No feedback yet. Responses will appear here as they come in.
-          </div>
-        )}
-
         {status === 'loaded' && items.length > 0 && (
-          <>
-            <FilterPanel>
-              <SearchInput
-                value={query}
-                onChange={setQuery}
-                placeholder="Search name, email, phone or notes…"
-              />
-              <div className="flex flex-wrap gap-x-6 gap-y-3">
-                <SegmentedFilter
-                  label="Course"
-                  value={fCourse}
-                  onChange={setFCourse}
-                  options={[
-                    { value: 'yes', label: 'Yes' },
-                    { value: 'maybe', label: 'Maybe' },
-                    { value: 'no', label: 'No' },
-                  ]}
-                />
-                <SegmentedFilter
-                  label="Group chat"
-                  value={fGroup}
-                  onChange={setFGroup}
-                  options={[
-                    { value: 'yes', label: 'Yes' },
-                    { value: 'no', label: 'No' },
-                  ]}
-                />
-                <SegmentedFilter
-                  label="Newsletter"
-                  value={fNewsletter}
-                  onChange={setFNewsletter}
-                  options={[{ value: 'yes', label: 'Opted in' }]}
-                />
-                <SegmentedFilter
-                  label="Style"
-                  value={fStyle}
-                  onChange={setFStyle}
-                  options={[
-                    { value: 'tricks', label: 'Tricks' },
-                    { value: 'flow', label: 'Flow' },
-                    { value: 'mix', label: 'Mix' },
-                  ]}
-                />
-              </div>
-              <FilterFooter
-                matched={filtered.length}
-                total={items.length}
-                noun="response"
-                active={filtersActive}
-                onClear={clearFilters}
-              />
-            </FilterPanel>
-
-            {filtered.length === 0 ? (
-              <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
-                No responses match your search.
-              </div>
-            ) : (
-              <>
-                <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                  <Stat label="Responses" value={String(filtered.length)} />
-                  <Stat label="Avg difficulty" value={`${avg(difficulties)}${difficulties.length ? '/10' : ''}`} />
-                  <Stat label="Avg support" value={`${avg(supports)}${supports.length ? '/10' : ''}`} />
-                  <Stat label="Newsletter" value={String(newsletterCount)} />
-                  <Stat label="Course: yes/maybe" value={`${courseYes}/${courseMaybe}`} />
-                  <Stat label="Group chat: yes" value={String(groupYes)} />
-                </div>
-
-                <ul className="space-y-4">
-                  {filtered.slice(0, visible).map((item) => (
-                    <SubmissionCard key={item.id} item={item} />
-                  ))}
-                </ul>
-                <InfiniteScroll
-                  visible={Math.min(visible, filtered.length)}
-                  total={filtered.length}
-                  noun="response"
-                  onMore={showMore}
-                />
-              </>
-            )}
-          </>
+          <button
+            type="button"
+            onClick={() => downloadCsv(filtered)}
+            className="inline-flex items-center justify-center rounded-full border border-cream/25 px-5 py-2.5 text-sm font-semibold text-cream/85 transition-colors hover:border-terracotta-light hover:text-cream"
+          >
+            Export CSV
+          </button>
         )}
+      </div>
+
+      {status === 'loading' && (
+        <SkeletonGroup label="Loading feedback…">
+          <SkeletonStats />
+          <div className="mt-6">
+            <SkeletonCardList count={5} />
+          </div>
+        </SkeletonGroup>
+      )}
+
+      {status === 'error' && (
+        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta-light">
+          {error}
+        </p>
+      )}
+
+      {status === 'loaded' && items.length === 0 && (
+        <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
+          No feedback yet. Responses will appear here as they come in.
+        </div>
+      )}
+
+      {status === 'loaded' && items.length > 0 && (
+        <>
+          <FilterPanel>
+            <SearchInput
+              value={query}
+              onChange={setQuery}
+              placeholder="Search name, email, phone or notes…"
+            />
+            <div className="flex flex-wrap gap-x-6 gap-y-3">
+              <SegmentedFilter
+                label="Course"
+                value={fCourse}
+                onChange={setFCourse}
+                options={[
+                  { value: 'yes', label: 'Yes' },
+                  { value: 'maybe', label: 'Maybe' },
+                  { value: 'no', label: 'No' },
+                ]}
+              />
+              <SegmentedFilter
+                label="Group chat"
+                value={fGroup}
+                onChange={setFGroup}
+                options={[
+                  { value: 'yes', label: 'Yes' },
+                  { value: 'no', label: 'No' },
+                ]}
+              />
+              <SegmentedFilter
+                label="Newsletter"
+                value={fNewsletter}
+                onChange={setFNewsletter}
+                options={[{ value: 'yes', label: 'Opted in' }]}
+              />
+              <SegmentedFilter
+                label="Style"
+                value={fStyle}
+                onChange={setFStyle}
+                options={[
+                  { value: 'tricks', label: 'Tricks' },
+                  { value: 'flow', label: 'Flow' },
+                  { value: 'mix', label: 'Mix' },
+                ]}
+              />
+            </div>
+            <FilterFooter
+              matched={filtered.length}
+              total={items.length}
+              noun="response"
+              active={filtersActive}
+              onClear={clearFilters}
+            />
+          </FilterPanel>
+
+          {filtered.length === 0 ? (
+            <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center text-cream/70">
+              No responses match your search.
+            </div>
+          ) : (
+            <>
+              <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                <Stat label="Responses" value={String(filtered.length)} />
+                <Stat
+                  label="Avg difficulty"
+                  value={`${avg(difficulties)}${difficulties.length ? '/10' : ''}`}
+                />
+                <Stat
+                  label="Avg support"
+                  value={`${avg(supports)}${supports.length ? '/10' : ''}`}
+                />
+                <Stat label="Newsletter" value={String(newsletterCount)} />
+                <Stat label="Course: yes/maybe" value={`${courseYes}/${courseMaybe}`} />
+                <Stat label="Group chat: yes" value={String(groupYes)} />
+              </div>
+
+              <ul className="space-y-4">
+                {filtered.slice(0, visible).map((item) => (
+                  <SubmissionCard key={item.id} item={item} />
+                ))}
+              </ul>
+              <InfiniteScroll
+                visible={Math.min(visible, filtered.length)}
+                total={filtered.length}
+                noun="response"
+                onMore={showMore}
+              />
+            </>
+          )}
+        </>
+      )}
     </>
   );
 }
@@ -295,7 +306,7 @@ export default function FeedbackDashboard() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-cream/10 bg-forest/40 p-4">
-      <div className="font-display text-2xl text-mustard">{value}</div>
+      <div className="font-display text-2xl text-terracotta">{value}</div>
       <div className="mt-0.5 text-xs uppercase tracking-wide text-cream/55">{label}</div>
     </div>
   );
@@ -332,7 +343,7 @@ function SubmissionCard({ item }: { item: FeedbackItem }) {
             {item.phone ? <div>{item.phone}</div> : null}
             {!item.email && !item.phone ? <span className="text-cream/50">—</span> : null}
             {item.newsletter ? (
-              <span className="mt-1 inline-block rounded-full bg-mustard/20 px-2 py-0.5 text-xs text-mustard">
+              <span className="mt-1 inline-block rounded-full bg-terracotta-light/20 px-2 py-0.5 text-xs text-terracotta-light">
                 Newsletter opt-in
               </span>
             ) : null}
@@ -341,8 +352,12 @@ function SubmissionCard({ item }: { item: FeedbackItem }) {
 
         <Field label="Ratings">
           <div className="flex gap-6">
-            <span>Difficulty: {typeof item.difficulty === 'number' ? `${item.difficulty}/10` : '—'}</span>
-            <span>Support: {typeof item.supported === 'number' ? `${item.supported}/10` : '—'}</span>
+            <span>
+              Difficulty: {typeof item.difficulty === 'number' ? `${item.difficulty}/10` : '—'}
+            </span>
+            <span>
+              Support: {typeof item.supported === 'number' ? `${item.supported}/10` : '—'}
+            </span>
           </div>
         </Field>
 
@@ -359,7 +374,9 @@ function SubmissionCard({ item }: { item: FeedbackItem }) {
         )}
 
         {item.convenienceNote ? <Field label="Timing note">{item.convenienceNote}</Field> : null}
-        {item.improvements ? <Field label="Would change / like more">{item.improvements}</Field> : null}
+        {item.improvements ? (
+          <Field label="Would change / like more">{item.improvements}</Field>
+        ) : null}
         {source ? <Field label="Found via">{source}</Field> : null}
         {style ? <Field label="Learning style">{style}</Field> : null}
         {item.courseInterest ? (

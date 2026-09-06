@@ -1,16 +1,9 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-
-// Lambda Function URLs always carry a trailing slash; strip it so we don't post
-// to `…on.aws//contact` (which the handler's route table 404s on).
-const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
-
-// Cloudflare Turnstile site key (public). When unset (e.g. local dev with no key),
-// the widget is skipped entirely and the form posts with an empty token — the
-// Lambda only enforces verification when its secret is configured.
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+import { useEffect, useState } from 'react';
+import { apiPost, errorMessage } from '@/lib/api';
+import { useTurnstile } from '@/hooks/useTurnstile';
 
 const ENQUIRY_TYPES = [
   { value: 'general', label: 'General enquiry' },
@@ -21,96 +14,27 @@ const ENQUIRY_TYPES = [
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
-// Minimal typing for the Turnstile global injected by the api.js script.
-interface TurnstileApi {
-  render: (
-    el: HTMLElement,
-    opts: {
-      sitekey: string;
-      callback: (token: string) => void;
-      'expired-callback'?: () => void;
-      'error-callback'?: () => void;
-    },
-  ) => string;
-  reset: (widgetId?: string) => void;
-  remove: (widgetId?: string) => void;
-}
-
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-    onTurnstileLoad?: () => void;
-  }
-}
-
-const TURNSTILE_SRC =
-  'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
-
 export default function ContactForm() {
   const params = useSearchParams();
   const [enquiryType, setEnquiryType] = useState<string>('general');
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string>('');
 
-  const widgetRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string>('');
-  const tokenRef = useRef<string>('');
+  const turnstile = useTurnstile();
 
   useEffect(() => {
     const t = params.get('type');
     if (t && ENQUIRY_TYPES.some((e) => e.value === t)) setEnquiryType(t);
   }, [params]);
 
-  // Load + render the invisible Turnstile widget once on mount.
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return;
-
-    function renderWidget() {
-      if (!window.turnstile || !widgetRef.current || widgetIdRef.current) return;
-      widgetIdRef.current = window.turnstile.render(widgetRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        callback: (token) => {
-          tokenRef.current = token;
-        },
-        // Tokens are single-use and expire after ~5 min; refresh silently.
-        'expired-callback': () => {
-          tokenRef.current = '';
-          window.turnstile?.reset(widgetIdRef.current);
-        },
-        'error-callback': () => {
-          tokenRef.current = '';
-        },
-      });
-    }
-
-    window.onTurnstileLoad = renderWidget;
-
-    if (window.turnstile) {
-      renderWidget();
-    } else if (!document.querySelector(`script[src="${TURNSTILE_SRC}"]`)) {
-      const script = document.createElement('script');
-      script.src = TURNSTILE_SRC;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (window.turnstile && widgetIdRef.current) {
-        window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = '';
-      }
-    };
-  }, []);
-
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     // Turnstile is configured but hasn't produced a token yet — ask them to retry.
-    if (TURNSTILE_SITE_KEY && !tokenRef.current) {
+    if (turnstile.enabled && !turnstile.getToken()) {
       setStatus('error');
       setError('Still verifying you’re human — please wait a moment and try again.');
-      if (window.turnstile && widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+      turnstile.reset();
       return;
     }
 
@@ -125,42 +49,33 @@ export default function ContactForm() {
       enquiryType,
       message: String(data.get('message') ?? ''),
       company: String(data.get('company') ?? ''), // honeypot
-      turnstileToken: tokenRef.current,
+      turnstileToken: turnstile.getToken(),
     };
 
     try {
-      const res = await fetch(`${API_URL}/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Something went wrong. Please try again.');
-      }
+      await apiPost('/contact', payload);
       setStatus('success');
       form.reset();
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(err));
     } finally {
       // Tokens are single-use — get a fresh one for any subsequent submission.
-      tokenRef.current = '';
-      if (window.turnstile && widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+      turnstile.reset();
     }
   }
 
   if (status === 'success') {
     return (
       <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center">
-        <p className="font-display text-2xl text-mustard">Thanks! 🌀</p>
+        <p className="font-display text-2xl text-terracotta">Thanks! 🌀</p>
         <p className="mt-2 text-cream/80">Got your message. I’ll reply as soon as I can.</p>
       </div>
     );
   }
 
   const field =
-    'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-mustard focus:ring-2 focus:ring-mustard/20';
+    'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-terracotta-light focus:ring-2 focus:ring-terracotta-light/20';
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
@@ -205,16 +120,18 @@ export default function ContactForm() {
       </label>
 
       {/* Invisible Cloudflare Turnstile widget — renders nothing visible. */}
-      <div ref={widgetRef} />
+      <div ref={turnstile.widgetRef} />
 
       {status === 'error' && (
-        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
+        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta-light">
+          {error}
+        </p>
       )}
 
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="inline-flex items-center justify-center rounded-full bg-terracotta px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center rounded-full bg-terracotta-deep px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === 'submitting' ? 'Sending…' : 'Send message'}
       </button>

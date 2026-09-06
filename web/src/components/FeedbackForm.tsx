@@ -1,44 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { apiPost, errorMessage } from '@/lib/api';
+import { useTurnstile } from '@/hooks/useTurnstile';
 import { feedbackQuestions, type FeedbackQuestion } from '@/lib/data';
 import PhoneInput from '@/components/PhoneInput';
 
-// Lambda Function URLs always carry a trailing slash; strip it so we don't post
-// to `…on.aws//feedback` (which the handler's route table 404s on).
-const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
-
-// Cloudflare Turnstile site key (public). When unset (e.g. local dev with no key),
-// the widget is skipped and the form posts an empty token — the Lambda only
-// enforces verification when its secret is configured.
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
-
-const TURNSTILE_SRC =
-  'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
-
 type Status = 'idle' | 'submitting' | 'success' | 'error';
-
-// Minimal typing for the Turnstile global injected by the api.js script.
-interface TurnstileApi {
-  render: (
-    el: HTMLElement,
-    opts: {
-      sitekey: string;
-      callback: (token: string) => void;
-      'expired-callback'?: () => void;
-      'error-callback'?: () => void;
-    },
-  ) => string;
-  reset: (widgetId?: string) => void;
-  remove: (widgetId?: string) => void;
-}
-
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-    onTurnstileLoad?: () => void;
-  }
-}
 
 type Answers = {
   firstName: string;
@@ -79,7 +47,7 @@ const initialAnswers: Answers = {
 };
 
 const field =
-  'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-mustard focus:ring-2 focus:ring-mustard/20';
+  'w-full rounded-xl border border-cream/15 bg-forest/40 px-4 py-3 text-cream placeholder-cream/40 outline-none transition focus:border-terracotta-light focus:ring-2 focus:ring-terracotta-light/20';
 
 const labelText = 'mb-1.5 block text-sm font-semibold text-cream/80';
 
@@ -92,8 +60,8 @@ function chip(active: boolean): string {
   return [
     'cursor-pointer select-none rounded-full border px-4 py-2 text-sm transition',
     active
-      ? 'border-mustard bg-mustard font-semibold text-forest-dark'
-      : 'border-cream/20 text-cream/80 hover:border-mustard/70 hover:text-cream',
+      ? 'border-terracotta-light bg-terracotta-light font-semibold text-forest-dark'
+      : 'border-cream/20 text-cream/80 hover:border-terracotta-light/70 hover:text-cream',
   ].join(' ');
 }
 
@@ -123,55 +91,12 @@ export default function FeedbackForm() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
 
-  const widgetRef = useRef<HTMLDivElement>(null);
-  const widgetIdRef = useRef<string>('');
-  const tokenRef = useRef<string>('');
+  const turnstile = useTurnstile();
   const honeypotRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof Answers>(key: K, value: Answers[K]) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
   }
-
-  // Load + render the invisible Turnstile widget once on mount.
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return;
-
-    function renderWidget() {
-      if (!window.turnstile || !widgetRef.current || widgetIdRef.current) return;
-      widgetIdRef.current = window.turnstile.render(widgetRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        callback: (token) => {
-          tokenRef.current = token;
-        },
-        'expired-callback': () => {
-          tokenRef.current = '';
-          window.turnstile?.reset(widgetIdRef.current);
-        },
-        'error-callback': () => {
-          tokenRef.current = '';
-        },
-      });
-    }
-
-    window.onTurnstileLoad = renderWidget;
-
-    if (window.turnstile) {
-      renderWidget();
-    } else if (!document.querySelector(`script[src="${TURNSTILE_SRC}"]`)) {
-      const script = document.createElement('script');
-      script.src = TURNSTILE_SRC;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      if (window.turnstile && widgetIdRef.current) {
-        window.turnstile.remove(widgetIdRef.current);
-        widgetIdRef.current = '';
-      }
-    };
-  }, []);
 
   const personalValid =
     answers.firstName.trim() !== '' &&
@@ -201,10 +126,10 @@ export default function FeedbackForm() {
 
   async function submit() {
     // Turnstile is configured but hasn't produced a token yet — ask them to retry.
-    if (TURNSTILE_SITE_KEY && !tokenRef.current) {
+    if (turnstile.enabled && !turnstile.getToken()) {
       setStatus('error');
       setError('Still checking you’re human. Give it a moment and try again.');
-      if (window.turnstile && widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+      turnstile.reset();
       return;
     }
 
@@ -214,34 +139,25 @@ export default function FeedbackForm() {
     const payload = {
       ...answers,
       company: honeypotRef.current?.value ?? '', // honeypot
-      turnstileToken: tokenRef.current,
+      turnstileToken: turnstile.getToken(),
     };
 
     try {
-      const res = await fetch(`${API_URL}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Something went wrong. Please try again.');
-      }
+      await apiPost('/feedback', payload);
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(errorMessage(err));
     } finally {
       // Tokens are single-use — get a fresh one for any retry.
-      tokenRef.current = '';
-      if (window.turnstile && widgetIdRef.current) window.turnstile.reset(widgetIdRef.current);
+      turnstile.reset();
     }
   }
 
   if (status === 'success') {
     return (
       <div className="rounded-3xl border border-cream/10 bg-forest/40 p-8 text-center">
-        <p className="font-display text-2xl text-mustard">Thanks for your feedback! 🌀</p>
+        <p className="font-display text-2xl text-terracotta">Thanks for your feedback! 🌀</p>
         <p className="mt-2 text-cream/80">
           It really helps me shape the classes. See you at the next one!
         </p>
@@ -273,14 +189,16 @@ export default function FeedbackForm() {
       {/* Progress */}
       <div className="mb-6">
         <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.2em] text-cream/60">
-          <span>{step === 0 ? 'Your details' : `Question ${step} of ${feedbackQuestions.length}`}</span>
+          <span>
+            {step === 0 ? 'Your details' : `Question ${step} of ${feedbackQuestions.length}`}
+          </span>
           <span>
             {step + 1} / {totalSteps}
           </span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream/10">
           <div
-            className="h-full rounded-full bg-mustard transition-all duration-300"
+            className="h-full rounded-full bg-terracotta transition-all duration-300"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -293,10 +211,10 @@ export default function FeedbackForm() {
       )}
 
       {/* Invisible Cloudflare Turnstile widget — renders nothing visible. */}
-      <div ref={widgetRef} />
+      <div ref={turnstile.widgetRef} />
 
       {status === 'error' && (
-        <p className="mt-5 rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">
+        <p className="mt-5 rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta-light">
           {error}
         </p>
       )}
@@ -320,7 +238,7 @@ export default function FeedbackForm() {
           type="button"
           onClick={isLast ? submit : goNext}
           disabled={(step === 0 && !personalValid) || status === 'submitting'}
-          className="inline-flex items-center justify-center rounded-full bg-terracotta px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-full bg-terracotta-deep px-8 py-3 text-sm font-semibold text-cream transition-colors hover:bg-clay disabled:cursor-not-allowed disabled:opacity-60"
         >
           {step === 0 ? 'Continue' : primaryLabel}
         </button>
@@ -336,7 +254,7 @@ type StepProps = {
 
 // Red asterisk marking a required field.
 function Star() {
-  return <span className="text-terracotta"> *</span>;
+  return <span className="text-terracotta-light"> *</span>;
 }
 
 function PersonalStep({ answers, set }: StepProps) {
@@ -350,8 +268,8 @@ function PersonalStep({ answers, set }: StepProps) {
       <div>
         <h2 className="font-display text-2xl text-cream">A little about you</h2>
         <p className="mt-1 text-sm text-cream/70">
-          Just so I know whose feedback this is. Pop in your email or phone number so I can get
-          back to you.
+          Just so I know whose feedback this is. Pop in your email or phone number so I can get back
+          to you.
         </p>
       </div>
 
@@ -416,7 +334,7 @@ function PersonalStep({ answers, set }: StepProps) {
           type="checkbox"
           checked={answers.newsletter}
           onChange={(e) => set('newsletter', e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 accent-mustard"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-terracotta"
         />
         <span className="text-sm text-cream/85">
           Check this box if you’re happy for me to send you emails with updates for workshops and
@@ -452,26 +370,27 @@ function QuestionStep({
             className="grid grid-cols-5 gap-1.5 sm:gap-2 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]"
             style={{ '--cols': question.max - question.min + 1 } as React.CSSProperties}
           >
-            {Array.from({ length: question.max - question.min + 1 }, (_, i) => question.min + i).map(
-              (n) => {
-                const active = answers[question.key] === n;
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => set(question.key, active ? null : n)}
-                    aria-pressed={active}
-                    className={`min-w-0 rounded-lg border py-3 text-center text-sm tabular-nums transition ${
-                      active
-                        ? 'border-mustard bg-mustard font-semibold text-forest-dark'
-                        : 'border-cream/20 text-cream/80 hover:border-mustard/70 hover:text-cream'
-                    }`}
-                  >
-                    {n}
-                  </button>
-                );
-              },
-            )}
+            {Array.from(
+              { length: question.max - question.min + 1 },
+              (_, i) => question.min + i,
+            ).map((n) => {
+              const active = answers[question.key] === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => set(question.key, active ? null : n)}
+                  aria-pressed={active}
+                  className={`min-w-0 rounded-lg border py-3 text-center text-sm tabular-nums transition ${
+                    active
+                      ? 'border-terracotta-light bg-terracotta-light font-semibold text-forest-dark'
+                      : 'border-cream/20 text-cream/80 hover:border-terracotta-light/70 hover:text-cream'
+                  }`}
+                >
+                  {n}
+                </button>
+              );
+            })}
           </div>
           <div className="mt-2 flex justify-between text-xs text-cream/50">
             <span>{question.minLabel}</span>
@@ -498,7 +417,9 @@ function QuestionStep({
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => set(question.key, answers[question.key] === opt.value ? '' : opt.value)}
+                onClick={() =>
+                  set(question.key, answers[question.key] === opt.value ? '' : opt.value)
+                }
                 className={chip(answers[question.key] === opt.value)}
                 aria-pressed={answers[question.key] === opt.value}
               >
@@ -557,8 +478,8 @@ function QuestionStep({
                             className={[
                               'h-9 w-full min-w-[3.5rem] rounded-lg border transition',
                               active
-                                ? 'border-mustard bg-mustard text-forest-dark'
-                                : 'border-cream/15 bg-forest/30 text-cream/40 hover:border-mustard/60',
+                                ? 'border-terracotta-light bg-terracotta-light text-forest-dark'
+                                : 'border-cream/15 bg-forest/30 text-cream/40 hover:border-terracotta-light/60',
                             ].join(' ')}
                           >
                             {active ? '✓' : ''}

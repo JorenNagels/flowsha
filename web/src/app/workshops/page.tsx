@@ -63,7 +63,7 @@ export default function WorkshopsPage() {
           <div className="order-2 md:order-1">
             <FadeIn
               as="p"
-              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+              className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
             >
               Workshops
             </FadeIn>
@@ -93,7 +93,7 @@ export default function WorkshopsPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {workshopTypes.map((w) => (
             <FadeIn key={w.title}>
-              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-mustard/50">
+              <div className="flex h-full flex-col rounded-3xl border border-cream/10 bg-forest/40 p-7 transition-colors hover:border-terracotta-light/50">
                 <h2 className="font-display text-xl text-cream">{w.title}</h2>
                 <p className="mt-2 text-cream/80">{w.blurb}</p>
               </div>
@@ -131,7 +131,7 @@ export default function WorkshopsPage() {
               <div className="flex h-full flex-col rounded-3xl bg-forest-dark p-8 text-cream">
                 <h3 className="font-display text-2xl text-cream">{groupWorkshop.name}</h3>
                 <p className="mt-1 text-cream/70">{groupWorkshop.duration}</p>
-                <p className="mt-4 font-display text-5xl text-mustard">
+                <p className="mt-4 font-display text-5xl text-terracotta">
                   {groupWorkshop.price}
                   <span className="ml-2 align-middle text-base text-cream/70">
                     {groupWorkshop.note}

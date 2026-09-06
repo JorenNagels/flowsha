@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <section className="mx-auto max-w-3xl px-6 py-16 sm:px-8">
         <FadeIn
           as="p"
-          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+          className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
         >
           Privacy
         </FadeIn>
@@ -53,7 +53,7 @@ export default function PrivacyPage() {
                     <li key={item.slice(0, 24)} className="flex gap-3">
                       <span
                         aria-hidden="true"
-                        className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-mustard"
+                        className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-terracotta-light"
                       />
                       <span>{item}</span>
                     </li>
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
                     href={section.link.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-mustard underline transition-colors hover:text-mustard/80"
+                    className="text-terracotta-light underline transition-colors hover:text-terracotta-light/80"
                   >
                     {section.link.label}
                   </a>

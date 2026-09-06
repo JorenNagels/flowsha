@@ -45,7 +45,7 @@ export function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-cream/15 bg-forest/40 py-2.5 pl-10 pr-10 text-cream placeholder-cream/40 outline-none transition focus:border-mustard focus:ring-2 focus:ring-mustard/20"
+        className="w-full rounded-xl border border-cream/15 bg-forest/40 py-2.5 pl-10 pr-10 text-cream placeholder-cream/40 outline-none transition focus:border-terracotta-light focus:ring-2 focus:ring-terracotta-light/20"
       />
       {value && (
         <button
@@ -87,7 +87,7 @@ export function SegmentedFilter({
             onClick={() => onChange(o.value)}
             className={`rounded-full px-3 py-1 text-sm transition-colors ${
               value === o.value
-                ? 'bg-mustard/20 font-semibold text-cream'
+                ? 'bg-terracotta-light/20 font-semibold text-cream'
                 : 'text-cream/60 hover:bg-cream/5 hover:text-cream'
             }`}
           >
@@ -129,7 +129,7 @@ export function FilterFooter({
         <button
           type="button"
           onClick={onClear}
-          className="font-semibold text-mustard transition-colors hover:text-mustard/80"
+          className="font-semibold text-terracotta-light transition-colors hover:text-terracotta-light/80"
         >
           Clear filters
         </button>

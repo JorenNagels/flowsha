@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { LoadingBlock } from '@/components/Spinner';
-
-const API_URL = (process.env.NEXT_PUBLIC_CONTACT_API_URL ?? '').replace(/\/$/, '');
+import { SkeletonCard, SkeletonGroup } from '@/components/Skeleton';
+import { apiGet, errorMessage } from '@/lib/api';
 
 type Status = 'loading' | 'loaded' | 'error';
 
@@ -12,7 +11,7 @@ type Status = 'loading' | 'loaded' | 'error';
 export default function DashboardOverview() {
   const { getToken } = useAuth();
   const [status, setStatus] = useState<Status>('loading');
-  const [counts, setCounts] = useState({ feedback: 0, waivers: 0 });
+  const [counts, setCounts] = useState({ feedback: 0, waivers: 0, orders: 0, hoops: 0 });
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -20,27 +19,27 @@ export default function DashboardOverview() {
     (async () => {
       try {
         const token = await getToken();
-        const headers = { Authorization: `Bearer ${token ?? ''}` };
-        const [fRes, wRes] = await Promise.all([
-          fetch(`${API_URL}/feedback`, { headers }),
-          fetch(`${API_URL}/waiver`, { headers }),
+        // Shop endpoints are allowed to fail without taking the page down —
+        // they 503 until the tables are deployed.
+        const [fData, wData, oData, pData] = await Promise.all([
+          apiGet<{ items: unknown[] }>('/feedback', token),
+          apiGet<{ items: unknown[] }>('/waiver', token),
+          apiGet<{ items: unknown[] }>('/admin/orders', token).catch(() => ({ items: [] })),
+          apiGet<{ items: unknown[] }>('/admin/products', token).catch(() => ({ items: [] })),
         ]);
-        if (!fRes.ok || !wRes.ok) {
-          const bad = !fRes.ok ? fRes : wRes;
-          const body = await bad.json().catch(() => ({}));
-          throw new Error(body.error || `Request failed (${bad.status}).`);
-        }
-        const [fData, wData] = await Promise.all([fRes.json(), wRes.json()]);
         if (!cancelled) {
+          const len = (d: { items: unknown[] }) => (Array.isArray(d.items) ? d.items.length : 0);
           setCounts({
-            feedback: Array.isArray(fData.items) ? fData.items.length : 0,
-            waivers: Array.isArray(wData.items) ? wData.items.length : 0,
+            feedback: len(fData),
+            waivers: len(wData),
+            orders: len(oData),
+            hoops: len(pData),
           });
           setStatus('loaded');
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Something went wrong.');
+          setError(errorMessage(err, 'Something went wrong.'));
           setStatus('error');
         }
       }
@@ -57,10 +56,21 @@ export default function DashboardOverview() {
         <p className="mt-1 text-cream/70">Everything people have sent through the site.</p>
       </div>
 
-      {status === 'loading' && <LoadingBlock />}
+      {status === 'loading' && (
+        <SkeletonGroup label="Loading dashboard totals…">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        </SkeletonGroup>
+      )}
 
       {status === 'error' && (
-        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta">{error}</p>
+        <p className="rounded-xl bg-terracotta/15 px-4 py-3 text-sm text-terracotta-light">
+          {error}
+        </p>
       )}
 
       {status === 'loaded' && (
@@ -78,6 +88,20 @@ export default function DashboardOverview() {
             description="PAR-Q and consent forms signed before a first class."
             count={counts.waivers}
             noun="waiver"
+          />
+          <OverviewCard
+            href="/dashboard/orders/"
+            title="Orders"
+            description="Hoop orders that have been paid for, and what still needs making."
+            count={counts.orders}
+            noun="order"
+          />
+          <OverviewCard
+            href="/dashboard/shop/"
+            title="Ready-made hoops"
+            description="The one-off hoops listed in the shop right now."
+            count={counts.hoops}
+            noun="hoop"
           />
         </div>
       )}
@@ -101,15 +125,15 @@ function OverviewCard({
   return (
     <a
       href={href}
-      className="group flex flex-col rounded-3xl border border-cream/10 bg-forest/40 p-6 transition-colors hover:border-mustard/50"
+      className="group flex flex-col rounded-3xl border border-cream/10 bg-forest/40 p-6 transition-colors hover:border-terracotta-light/50"
     >
-      <div className="font-display text-4xl text-mustard">{count}</div>
+      <div className="font-display text-4xl text-terracotta">{count}</div>
       <div className="mt-0.5 text-xs uppercase tracking-wide text-cream/55">
         {count === 1 ? noun : `${noun}s`}
       </div>
       <h2 className="mt-4 font-display text-xl text-cream">{title}</h2>
       <p className="mt-1 text-sm text-cream/70">{description}</p>
-      <span className="mt-4 text-sm font-semibold text-cream/80 transition-colors group-hover:text-mustard">
+      <span className="mt-4 text-sm font-semibold text-cream/80 transition-colors group-hover:text-terracotta-light">
         View {title.toLowerCase()} →
       </span>
     </a>

@@ -60,6 +60,15 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
+  // Both icons are declared explicitly, and both entries are required: setting `icons` at
+  // all suppresses Next's file-convention detection, so naming only `apple` would silently
+  // drop the favicon. The Apple icon can't use the `app/apple-icon.png` convention because
+  // next-image-export-optimizer then treats it as a content image and emits eight useless
+  // WEBP variants into web/public/. Both files come from `npm run prep-brand`.
+  icons: {
+    icon: { url: '/icon.svg', type: 'image/svg+xml' },
+    apple: '/brand/apple-touch-icon.png',
+  },
 };
 
 const localBusinessJsonLd = {

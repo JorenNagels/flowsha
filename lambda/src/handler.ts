@@ -1,165 +1,65 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { z } from 'zod';
-import { jsonResponse } from './lib/cors.js';
+import { jsonResponse } from './lib/http.js';
+import { getFeedback, getWaiver, postContact, postFeedback, postWaiver } from './routes/forms.js';
+import { getProducts, postCheckout, postStripeWebhook } from './routes/shop.js';
 import {
-  contactSchema,
-  feedbackSchema,
-  waiverSchema,
-  WAIVER_VERSION,
-  formatZodError,
-} from './lib/validation.js';
-import { sendContactEmail, sendWaiverEmail } from './lib/ses.js';
-import { saveFeedback, listFeedback, saveWaiver, listWaivers } from './lib/db.js';
-import { isTurnstileEnabled, verifyTurnstile } from './lib/turnstile.js';
-import { verifySession } from './lib/clerk.js';
+  getAdminOrders,
+  getAdminProducts,
+  patchAdminOrder,
+  patchAdminProduct,
+  postAdminProduct,
+  postUpload,
+} from './routes/admin.js';
 
-const MAX_BODY_BYTES = 64 * 1024;
+type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
 
-function parseBody<S extends z.ZodTypeAny>(
-  event: APIGatewayProxyEventV2,
-  schema: S,
-): { ok: true; data: z.infer<S> } | { ok: false; response: APIGatewayProxyResultV2 } {
-  const raw = event.body ?? '';
-  if (raw.length > MAX_BODY_BYTES) {
-    return { ok: false, response: jsonResponse(413, { error: 'Request body too large.' }) };
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw || '{}');
-  } catch {
-    return { ok: false, response: jsonResponse(400, { error: 'Invalid JSON body.' }) };
-  }
-  const result = schema.safeParse(parsed);
-  if (!result.success) {
-    return { ok: false, response: jsonResponse(400, { error: formatZodError(result.error) }) };
-  }
-  return { ok: true, data: result.data };
+// Keyed `METHOD /path`. This replaced a flat if-chain, which was already long at
+// five routes and unreadable at fourteen.
+const routes: Record<string, RouteHandler> = {
+  // --- Public forms ---
+  'POST /contact': postContact,
+  'POST /feedback': postFeedback,
+  'POST /waiver': postWaiver,
+
+  // --- Dashboard reads (Clerk session JWT) ---
+  'GET /feedback': getFeedback,
+  'GET /waiver': getWaiver,
+
+  // --- Shop (public) ---
+  'GET /products': getProducts,
+  'POST /checkout': postCheckout,
+  'POST /stripe-webhook': postStripeWebhook,
+
+  // --- Shop admin (Clerk session JWT) ---
+  'POST /uploads': postUpload,
+  'GET /admin/products': getAdminProducts,
+  'POST /admin/products': postAdminProduct,
+  'PATCH /admin/products': patchAdminProduct,
+  'GET /admin/orders': getAdminOrders,
+  'PATCH /admin/orders': patchAdminOrder,
+};
+
+/**
+ * Function URLs always carry a trailing slash on the base URL, and callers vary
+ * on whether they add one. Normalise so `/contact` and `/contact/` are the same
+ * route rather than a silent 404.
+ */
+function normalisePath(rawPath: string): string {
+  const path = rawPath || '/';
+  return path.length > 1 ? path.replace(/\/+$/, '') : path;
 }
 
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
-  const path = event.rawPath;
   const method = event.requestContext.http.method;
+  const path = normalisePath(event.rawPath);
+
+  const route = routes[`${method} ${path}`];
+  if (!route) return jsonResponse(404, { error: 'Not found' });
 
   try {
-    if (method === 'POST' && path === '/contact') {
-      const parsed = parseBody(event, contactSchema);
-      if (!parsed.ok) return parsed.response;
-
-      // Honeypot: a bot filled the hidden field. Pretend success, send nothing.
-      if (parsed.data.company.trim() !== '') {
-        return jsonResponse(200, { ok: true });
-      }
-
-      // Cloudflare Turnstile: confirm a real human (only when a secret is configured).
-      if (isTurnstileEnabled()) {
-        const human = await verifyTurnstile(
-          parsed.data.turnstileToken,
-          event.requestContext.http.sourceIp,
-        );
-        if (!human) {
-          return jsonResponse(400, {
-            error: 'Could not verify you’re human. Please refresh the page and try again.',
-          });
-        }
-      }
-
-      await sendContactEmail(parsed.data);
-      return jsonResponse(200, { ok: true });
-    }
-
-    if (method === 'POST' && path === '/feedback') {
-      const parsed = parseBody(event, feedbackSchema);
-      if (!parsed.ok) return parsed.response;
-
-      // Honeypot: a bot filled the hidden field. Pretend success, store nothing.
-      if (parsed.data.company.trim() !== '') {
-        return jsonResponse(200, { ok: true });
-      }
-
-      // Cloudflare Turnstile: confirm a real human (only when a secret is configured).
-      if (isTurnstileEnabled()) {
-        const human = await verifyTurnstile(
-          parsed.data.turnstileToken,
-          event.requestContext.http.sourceIp,
-        );
-        if (!human) {
-          return jsonResponse(400, {
-            error: 'Could not verify you’re human. Please refresh the page and try again.',
-          });
-        }
-      }
-
-      await saveFeedback(parsed.data);
-      return jsonResponse(200, { ok: true });
-    }
-
-    // Authenticated read for the private /dashboard. Verifies a Clerk session
-    // JWT (Bearer token) before returning any submissions.
-    if (method === 'GET' && path === '/feedback') {
-      const auth = event.headers.authorization ?? '';
-      const token = auth.replace(/^Bearer /i, '').trim();
-      const session = await verifySession(token);
-      if (!session) return jsonResponse(401, { error: 'Unauthorized' });
-
-      return jsonResponse(200, { items: await listFeedback() });
-    }
-
-    // Signed PAR-Q + Informed Consent waiver. Emails Osha a copy and persists
-    // it, stamping an audit trail (IP, user-agent, waiver version) for the
-    // electronic signature.
-    if (method === 'POST' && path === '/waiver') {
-      const parsed = parseBody(event, waiverSchema);
-      if (!parsed.ok) return parsed.response;
-
-      // Honeypot: a bot filled the hidden field. Pretend success, store nothing.
-      if (parsed.data.company.trim() !== '') {
-        return jsonResponse(200, { ok: true });
-      }
-
-      // Cloudflare Turnstile: confirm a real human (only when a secret is configured).
-      if (isTurnstileEnabled()) {
-        const human = await verifyTurnstile(
-          parsed.data.turnstileToken,
-          event.requestContext.http.sourceIp,
-        );
-        if (!human) {
-          return jsonResponse(400, {
-            error: 'Could not verify you’re human. Please refresh the page and try again.',
-          });
-        }
-      }
-
-      // The signed waiver is a legal record — persist it first (critical; may
-      // throw → 500). The owner notification is best-effort: a failed email
-      // must never lose the stored waiver or block the signer.
-      await saveWaiver(parsed.data, {
-        signedIp: event.requestContext.http.sourceIp,
-        userAgent: event.headers['user-agent'],
-        waiverVersion: WAIVER_VERSION,
-      });
-      try {
-        await sendWaiverEmail(parsed.data);
-      } catch (err) {
-        console.error('Waiver notification email failed (non-fatal):', err);
-      }
-      return jsonResponse(200, { ok: true });
-    }
-
-    // Authenticated read of signed waivers for the private /dashboard/waivers.
-    if (method === 'GET' && path === '/waiver') {
-      const auth = event.headers.authorization ?? '';
-      const token = auth.replace(/^Bearer /i, '').trim();
-      const session = await verifySession(token);
-      if (!session) return jsonResponse(401, { error: 'Unauthorized' });
-
-      return jsonResponse(200, { items: await listWaivers() });
-    }
-
-    // Future: POST /orders, POST /checkout, etc.
-
-    return jsonResponse(404, { error: 'Not found' });
+    return await route(event);
   } catch (error) {
-    console.error('Handler error:', error);
+    console.error(`Handler error (${method} ${path}):`, error);
     return jsonResponse(500, { error: 'Internal server error' });
   }
 }

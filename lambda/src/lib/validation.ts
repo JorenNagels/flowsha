@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_QUANTITY, MAX_SIZE_INCHES, MIN_SIZE_INCHES } from '@flowsha/shared';
 
 export const ENQUIRY_TYPES = ['general', 'workshop', 'performance', 'shop'] as const;
 
@@ -113,7 +114,11 @@ export const waiverSchema = z
 
     // Emergency contact (required).
     emergencyName: z.string().trim().min(1, 'Please enter an emergency contact name.').max(100),
-    emergencyPhone: z.string().trim().min(1, 'Please enter an emergency contact phone number.').max(50),
+    emergencyPhone: z
+      .string()
+      .trim()
+      .min(1, 'Please enter an emergency contact phone number.')
+      .max(50),
 
     // Medical representation — optional free-text detail.
     medicalDetails: z.string().trim().max(3000).optional().default(''),
@@ -154,19 +159,39 @@ export const waiverSchema = z
   .superRefine((d, ctx) => {
     const age = ageFromDob(d.dateOfBirth);
     if (age === null) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['dateOfBirth'], message: 'Please enter a valid date of birth.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['dateOfBirth'],
+        message: 'Please enter a valid date of birth.',
+      });
       return;
     }
     if (age < 18) {
       // Minor: a parent/guardian must complete and sign on their behalf.
       if (d.guardianName === '')
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianName'], message: 'A parent or guardian must sign for a participant under 18.' });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['guardianName'],
+          message: 'A parent or guardian must sign for a participant under 18.',
+        });
       if (d.guardianRelationship === '')
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianRelationship'], message: 'Please enter the guardian’s relationship to the participant.' });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['guardianRelationship'],
+          message: 'Please enter the guardian’s relationship to the participant.',
+        });
       if (d.guardianSignature === '')
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['guardianSignature'], message: 'Please enter the guardian’s name as their signature.' });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['guardianSignature'],
+          message: 'Please enter the guardian’s name as their signature.',
+        });
     } else if (d.signatureName === '') {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['signatureName'], message: 'Please type your name to sign.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['signatureName'],
+        message: 'Please type your name to sign.',
+      });
     }
   });
 
@@ -175,3 +200,90 @@ export type WaiverInput = z.infer<typeof waiverSchema>;
 export function formatZodError(error: z.ZodError): string {
   return error.issues.map((i) => i.message).join(' ');
 }
+
+// --- Shop -------------------------------------------------------------------
+
+// Option ids and bounds come from @flowsha/shared, so the schema can never drift
+// from the price table it is validating against.
+const customItemSchema = z.object({
+  kind: z.literal('custom'),
+  config: z.object({
+    productId: z.enum(['simple-spiral', 'all-shiny']),
+    sizeInches: z.number().int().min(MIN_SIZE_INCHES).max(MAX_SIZE_INCHES),
+    tubingId: z.enum(['skinny', 'regular']),
+    jointId: z.enum(['fixed', 'collapsible']),
+    // One entry per tape slot; '' means an optional slot was left unchosen.
+    tapeIds: z.array(z.string().max(64)).max(4),
+  }),
+  quantity: z.number().int().min(1).max(MAX_QUANTITY),
+});
+
+// Ready-made hoops are one-offs, so the quantity is always exactly 1.
+const readyMadeItemSchema = z.object({
+  kind: z.literal('ready-made'),
+  hoopId: z.string().trim().min(1).max(64),
+  quantity: z.literal(1),
+});
+
+export const cartItemSchema = z.discriminatedUnion('kind', [customItemSchema, readyMadeItemSchema]);
+
+// NOTE: no price field anywhere. The Lambda re-prices the whole basket from the
+// shared table; anything the browser thinks it costs is display-only.
+export const checkoutSchema = z.object({
+  items: z.array(cartItemSchema).min(1, 'Your basket is empty.').max(20),
+  deliveryMethod: z.enum(['collection', 'uk-standard']),
+  email: z.string().trim().email('Please enter a valid email address.').max(320),
+  acceptedTerms: z.literal(true, {
+    errorMap: () => ({ message: 'Please accept the terms and cancellation policy to continue.' }),
+  }),
+  company: z.string().max(200).optional().default(''),
+  turnstileToken: z.string().max(4096).optional().default(''),
+});
+
+export type CheckoutInput = z.infer<typeof checkoutSchema>;
+
+// Photo upload: the browser resizes to WebP before asking for a presigned PUT.
+// The size cap is re-enforced server-side when signing — a browser-side limit is
+// a suggestion, not a control.
+export const MAX_UPLOAD_BYTES = 3 * 1024 * 1024;
+
+export const uploadRequestSchema = z.object({
+  contentType: z.enum(['image/webp', 'image/jpeg', 'image/png']),
+  contentLength: z.number().int().min(1).max(MAX_UPLOAD_BYTES),
+});
+
+export type UploadRequestInput = z.infer<typeof uploadRequestSchema>;
+
+export const adminProductSchema = z.object({
+  // Absent on create, present on edit.
+  id: z.string().trim().max(64).optional(),
+  title: z.string().trim().min(1, 'Please give the hoop a title.').max(200),
+  description: z.string().trim().max(3000).optional().default(''),
+  sizeInches: z.number().int().min(MIN_SIZE_INCHES).max(MAX_SIZE_INCHES),
+  tubingId: z.enum(['skinny', 'regular']),
+  jointId: z.enum(['fixed', 'collapsible']),
+  tapeSummary: z.string().trim().max(500).optional().default(''),
+  pricePence: z.number().int().min(1, 'Please set a price.').max(10_000_00),
+  status: z.enum(['draft', 'available', 'reserved', 'sold', 'archived']),
+  photos: z
+    .array(
+      z.object({
+        url: z.string().trim().min(1).max(500),
+        // Mandatory, not optional-and-always-skipped: it is required for both
+        // accessibility and SEO.
+        alt: z.string().trim().min(1, 'Every photo needs alt text.').max(300),
+      }),
+    )
+    .max(12)
+    .default([]),
+});
+
+export type AdminProductInput = z.infer<typeof adminProductSchema>;
+
+export const adminOrderPatchSchema = z.object({
+  id: z.string().trim().min(1).max(200),
+  status: z.enum(['paid', 'in-progress', 'dispatched', 'cancelled']),
+  trackingNumber: z.string().trim().max(100).optional(),
+});
+
+export type AdminOrderPatchInput = z.infer<typeof adminOrderPatchSchema>;

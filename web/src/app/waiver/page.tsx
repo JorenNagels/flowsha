@@ -15,7 +15,7 @@ export default function WaiverPage() {
     <section className="mx-auto max-w-2xl px-6 py-16 sm:px-8">
       <FadeIn
         as="p"
-        className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-mustard"
+        className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-terracotta-light"
       >
         Before your first class
       </FadeIn>
@@ -25,7 +25,7 @@ export default function WaiverPage() {
       <FadeIn as="p" className="mb-10 text-lg text-cream/85">
         A quick health questionnaire and consent form so I know you can take part safely. Your
         answers are kept private and confidential &mdash; see the{' '}
-        <a href="/privacy/" className="underline decoration-mustard/60 underline-offset-2 hover:text-cream">
+        <a href="/privacy/" className="underline decoration-terracotta-light/60 underline-offset-2 hover:text-cream">
           privacy policy
         </a>{' '}
         for how your information is handled.

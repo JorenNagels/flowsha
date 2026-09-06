@@ -17,13 +17,13 @@ export default function Hero() {
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-forest-dark via-forest-dark/60 to-forest-dark/30" />
 
-      {/* Soft mustard glow — the After Dark signature. */}
-      <div className="animate-float pointer-events-none absolute -right-10 top-16 -z-10 h-72 w-72 rounded-full bg-mustard/20 blur-3xl" />
+      {/* Soft terracotta-light glow — the After Dark signature. */}
+      <div className="animate-float pointer-events-none absolute -right-10 top-16 -z-10 h-72 w-72 rounded-full bg-terracotta/20 blur-3xl" />
 
       <div className="mx-auto w-full max-w-6xl py-20">
         <FadeIn
           as="p"
-          className="text-xs font-semibold uppercase tracking-[0.3em] text-mustard"
+          className="text-xs font-semibold uppercase tracking-[0.3em] text-terracotta-light"
         >
           {siteConfig.offerings}
         </FadeIn>
@@ -32,8 +32,8 @@ export default function Hero() {
           as="h1"
           className="mt-4 font-display text-[clamp(3rem,9vw,6.5rem)] leading-[0.9] text-cream drop-shadow-sm"
         >
-          flow <span className="text-mustard">•</span> play{' '}
-          <span className="text-mustard">•</span> connect
+          flow <span className="text-terracotta">•</span> play{' '}
+          <span className="text-terracotta">•</span> connect
         </FadeIn>
 
         <FadeIn as="p" className="mt-6 max-w-lg text-lg text-cream/80">

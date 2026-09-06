@@ -251,40 +251,55 @@ export const workshopTypes: WorkshopType[] = [
   },
 ];
 
-// --- Hoop Shop (static catalogue for now; ordering comes later) ---
-export type ShopCategory = { title: string; blurb: string };
+// --- Hoop Shop ---
+//
+// The configurable products, option lists and price table live in
+// @flowsha/shared, because the Lambda has to re-price every order from exactly
+// the same numbers. Only site copy lives here.
+//
+// `shopCategories` (Beginner / Intermediate / Kids' / Dance / Custom /
+// Accessories / Re-taping) was removed when the real shop landed. Note that
+// "Kids' Hoops" is deliberately gone and must not come back: marketing a hoop
+// for use by under-14s brings it under the Toys (Safety) Regulations 2011, with
+// UKCA marking, EN 71 testing and a 10-year technical file attached.
 
-export const shopCategories: ShopCategory[] = [
-  {
-    title: 'Beginner Hoops',
-    blurb:
-      'Bigger and heavier, so they spin slowly and stay up more easily. A good place to start.',
-  },
-  {
-    title: 'Intermediate Hoops',
-    blurb: 'Lighter and faster, for when you want to push your tricks a bit further.',
-  },
-  {
-    title: 'Kids’ Hoops',
-    blurb: 'Light, bright and sized for smaller hands.',
-  },
-  {
-    title: 'Dance Hoops',
-    blurb: 'Balanced and smooth, made for on-body flow and dancing.',
-  },
-  {
-    title: 'Custom Hoops',
-    blurb: 'Pick the size, weight, tape and colours, and I’ll make it to suit you.',
-  },
-  {
-    title: 'Accessories',
-    blurb: 'Grip tape, spare sections, hoop bags and the bits that keep you going.',
-  },
+/** Services that are enquiry-only — no configurator, no checkout. */
+export type ShopService = { title: string; blurb: string; cta: string; href: string };
+
+export const shopServices: ShopService[] = [
   {
     title: 'Re-taping',
-    blurb: 'Send me a tired hoop and I’ll re-tape it so it looks and feels new again.',
+    blurb:
+      'Send me a tired hoop and I\u2019ll re-tape it so it looks and feels new again. Cheaper than a new hoop, and kinder to the planet.',
+    cta: 'Ask about re-taping',
+    href: '/contact/?type=shop',
   },
 ];
+
+/** Long-form size guidance, shared by /shop/size-guide/ and the configurator. */
+export const sizeGuide = {
+  intro:
+    'Hoop size is mostly about how fast the hoop moves. A bigger hoop turns more slowly, which gives you longer to react \u2014 that is why beginners almost always start big. A smaller hoop moves quickly and suits faster tricks once you have the basics.',
+  steps: [
+    {
+      title: 'Stand it up next to you',
+      body: 'Rest the hoop on the floor in front of you. For learning waist hooping, it should reach somewhere between your navel and the middle of your chest.',
+    },
+    {
+      title: 'Go bigger if you are starting out',
+      body: 'If you are between two sizes and you are new to hooping, take the larger one. A hoop that is slightly too big is forgiving; one that is too small is genuinely hard to keep up.',
+    },
+    {
+      title: 'Go smaller for tricks',
+      body: 'Once waist hooping feels easy, a smaller, lighter hoop opens up hand work, isolations and on-body flow.',
+    },
+    {
+      title: 'Think about the tubing too',
+      body: 'Regular 19mm tubing is heavier and slower, so it stays up more easily. Skinny 16mm is lighter and faster, and better suited to dance and trick work.',
+    },
+  ],
+  note: 'Still unsure? Message me your height and what you would like to do with the hoop, and I will tell you what I would make you.',
+} as const;
 
 // --- Performances ---
 export type PerformanceType = { title: string; blurb: string };
@@ -516,7 +531,7 @@ export const privacyPolicy: {
   intro: string[];
   sections: PrivacySection[];
 } = {
-  updated: '9 June 2026',
+  updated: '22 August 2026',
   intro: [
     'Flowsha (“we”, “us”) is run by Osha and based in Southampton, Hampshire. This page explains what personal information we collect through this website, why we collect it, and what rights you have. For anything to do with your data, email us at hello@flowsha.co.uk.',
     'We keep this short and honest: this is a small business website. We only collect what we need to reply to you and to keep the contact form free of spam.',
@@ -527,6 +542,7 @@ export const privacyPolicy: {
       body: ['We collect personal information in two ways:'],
       list: [
         'When you use the contact form — your name, email address, the type of enquiry, an optional preferred date, and the message you write. You choose what to put in the message.',
+        'When you buy a hoop — your name, email address, delivery address, what you ordered and the amount paid. Your card details go straight to Stripe and never reach us.',
         'Spam protection (Cloudflare Turnstile) — to tell real visitors apart from bots, our form uses Cloudflare Turnstile, which processes your IP address and some technical signals from your browser (such as a TLS fingerprint and the user-agent string). These signals are strictly necessary to block spam and are not used to identify you or to track you across other websites.',
       ],
       link: {
@@ -574,6 +590,27 @@ export const privacyPolicy: {
       ],
     },
     {
+      heading: 'Payments (Stripe)',
+      body: [
+        'Payments are handled by Stripe Payments UK, Ltd, acting as our processor. When you check out you are taken to a page hosted by Stripe, so your card number is entered on their systems and never touches ours or this website.',
+        'Stripe passes back your name, email address, delivery address and the amount paid, so we can make and post your hoop. Stripe also uses the data to prevent fraud, which is their own legal obligation.',
+        'Our lawful basis is performance of a contract — we cannot sell you a hoop without it.',
+      ],
+      link: {
+        before: 'Stripe explains what it does with your data in its ',
+        label: 'privacy policy',
+        href: 'https://stripe.com/gb/privacy',
+        after: '.',
+      },
+    },
+    {
+      heading: 'How long we keep order information',
+      body: [
+        'We keep order records for six years after the end of the tax year they fall in, because HMRC requires it of a sole trader.',
+        'Order photographs and any messages you send us are deleted once they are no longer needed.',
+      ],
+    },
+    {
       heading: 'Your rights',
       body: [
         'You have the right to ask for a copy of the information we hold about you, to have it corrected or deleted, and to object to how we use it. To do any of these, just email hello@flowsha.co.uk and we’ll help.',
@@ -589,6 +626,196 @@ export const privacyPolicy: {
       heading: 'Changes to this policy',
       body: [
         'If we change how we handle your information, we’ll update this page and the date shown at the top.',
+      ],
+    },
+  ],
+};
+
+// --- Legal pages for the shop -----------------------------------------------
+//
+// ⚠️ Written to be honest and specific, but this is NOT legal advice. Have it
+// checked — Business Companion (businesscompanion.info) is the free Trading
+// Standards route — before taking real money.
+//
+// Two positions are deliberate and should not be quietly reversed:
+//
+//  1. The 14-day cancellation right is applied to EVERYTHING, including
+//     configured hoops. The Consumer Contracts Regulations exempt goods "made to
+//     the consumer's specification", but that exemption does not cover items
+//     assembled by combining standard stock options — which is exactly what a
+//     dropdown configurator produces. Claiming the exemption and being wrong
+//     stretches the cancellation window to twelve months.
+//  2. No VAT appears anywhere. Flowsha is a sole trader below the registration
+//     threshold, and showing VAT while unregistered is an offence.
+
+export type LegalDocument = { updated: string; intro: string[]; sections: PrivacySection[] };
+
+// ⚠️ PLACEHOLDER — a geographic postal address is legally required to be publicly
+// visible, and an email address alone is not enough. Replace before launch.
+export const TRADING_ADDRESS = '[TRADING ADDRESS TO BE CONFIRMED], Southampton, United Kingdom';
+
+const LEGAL_UPDATED = '22 August 2026';
+
+export const termsPolicy: LegalDocument = {
+  updated: LEGAL_UPDATED,
+  intro: [
+    'These terms cover hoops bought through this website. Nothing here affects your legal rights as a consumer.',
+    `Flowsha is a sole trader business run by Osha, trading from ${TRADING_ADDRESS}. You can reach us at hello@flowsha.co.uk.`,
+  ],
+  sections: [
+    {
+      heading: 'Who you are buying from',
+      body: [
+        `Flowsha is a sole trader, not a limited company, and is not registered for VAT. Prices shown are the final price — there is no VAT to add.`,
+        `Trading address: ${TRADING_ADDRESS}. Email: hello@flowsha.co.uk.`,
+      ],
+    },
+    {
+      heading: 'How the contract is formed',
+      body: [
+        'Placing an order is an offer to buy. The contract is formed when you receive the order confirmation email, not when payment is taken.',
+        'If something you ordered turns out to be unavailable — a one-off ready-made hoop sold in person at the same moment, for example — we will contact you and refund you in full.',
+      ],
+    },
+    {
+      heading: 'Prices and payment',
+      body: [
+        'Prices are in pounds sterling and include everything except delivery, which is shown separately before you pay.',
+        'Payment is taken in full at the time of ordering, through Stripe. We never see or store your card details.',
+        'If a price is obviously wrong (a clear mistake rather than a price you simply think is high), we will contact you before making your hoop and you can confirm or cancel.',
+      ],
+    },
+    {
+      heading: 'Making your hoop',
+      body: [
+        'Every hoop is made by hand to order. Expect 3–10 working days before dispatch; we will tell you if it will be longer.',
+        'Because tape is applied by hand, small variations between hoops are normal and are not faults. Colours can look slightly different on your screen from how they look in daylight.',
+      ],
+    },
+    {
+      heading: 'Your rights if something is wrong',
+      body: [
+        'Under the Consumer Rights Act 2015 your hoop must be as described, of satisfactory quality and fit for purpose.',
+        'If it is faulty you have 30 days to reject it for a full refund. After 30 days, and for six months from delivery, you can ask for a repair or replacement.',
+        'This is in addition to the 14-day right to change your mind described in the cancellation policy.',
+      ],
+      link: {
+        before: 'See the full ',
+        label: 'returns and cancellations policy',
+        href: '/returns/',
+        after: '.',
+      },
+    },
+    {
+      heading: 'Safety',
+      body: [
+        'Hoops are exercise equipment for adults and older teenagers. They are not toys and are not designed or intended for use in play by children under 14.',
+        'Use your hoop with space around you, away from furniture, people and pets. Fire and LED hoops are not sold through this website.',
+        'Stop if anything hurts. If you have an injury or a health condition, check with your GP before starting a new form of exercise.',
+      ],
+    },
+    {
+      heading: 'Liability',
+      body: [
+        'We do not limit our liability for death or personal injury caused by negligence, for fraud, or for anything else that cannot lawfully be limited.',
+        'Otherwise, our liability is limited to the price you paid for the hoop. We are not liable for losses that were not foreseeable when the contract was made.',
+      ],
+    },
+    {
+      heading: 'Governing law',
+      body: [
+        'These terms are governed by the law of England and Wales, and disputes may be brought in the courts of England and Wales.',
+      ],
+    },
+  ],
+};
+
+export const returnsPolicy: LegalDocument = {
+  updated: LEGAL_UPDATED,
+  intro: [
+    'You can change your mind about a hoop for any reason within 14 days of receiving it — including hoops you configured yourself.',
+    'That is on top of your separate rights if a hoop arrives faulty or not as described.',
+  ],
+  sections: [
+    {
+      heading: 'The 14-day right to cancel',
+      body: [
+        'You have 14 days, starting the day after your hoop is delivered, to tell us you want to cancel. You do not have to give a reason.',
+        'This applies to every hoop we sell, including made-to-order ones. We have chosen not to rely on the "made to your specification" exemption, because hoops built from standard sizes, tubing and tapes are assembled from stock options rather than genuinely personalised.',
+      ],
+    },
+    {
+      heading: 'How to cancel',
+      body: [
+        'Email hello@flowsha.co.uk with your order number and say you are cancelling. Any clear statement will do — you do not have to use a particular form of words or the model form below.',
+        'Model cancellation form: "To Flowsha, hello@flowsha.co.uk. I hereby give notice that I cancel my contract of sale of the following goods: [your order]. Ordered on: [date]. Received on: [date]. Name: [your name]. Address: [your address]. Date: [today]."',
+      ],
+    },
+    {
+      heading: 'Sending it back',
+      body: [
+        'Send the hoop back within 14 days of telling us you are cancelling.',
+        'You pay the cost of return postage. Please get a proof of postage — until it reaches us, the hoop is your responsibility.',
+        'Collapsible hoops post far more cheaply than fixed ones, which need a large, awkward parcel. Ask us before posting a fixed hoop and we will suggest the cheapest option.',
+      ],
+    },
+    {
+      heading: 'Your refund',
+      body: [
+        'We refund within 14 days of receiving the hoop back, to the card you paid with.',
+        'The refund includes the standard delivery you originally paid. If you chose a faster or more expensive delivery option, we refund the standard rate.',
+        'If the hoop has been used beyond what you would do to check it in a shop — scuffed tape, marked grip — we may reduce the refund to reflect that.',
+      ],
+    },
+    {
+      heading: 'If your hoop is faulty',
+      body: [
+        'Email us with a photograph and we will sort it out. If it is faulty you have 30 days to reject it for a full refund, and we pay return postage.',
+        'A hoop damaged in transit counts as faulty. Tell us within a few days of delivery so we can claim from the courier.',
+      ],
+    },
+  ],
+};
+
+export const deliveryPolicy: LegalDocument = {
+  updated: LEGAL_UPDATED,
+  intro: [
+    'We post to the UK mainland, and you can collect for free in Southampton.',
+    'Every hoop is made by hand once you order, so allow a few days before it is dispatched.',
+  ],
+  sections: [
+    {
+      heading: 'Where we deliver',
+      body: [
+        'UK mainland only. We do not ship internationally — hoops are large, light and awkward, which makes overseas postage disproportionately expensive.',
+        'If you are outside the UK mainland and really want one, email us and we will see what is possible.',
+      ],
+    },
+    {
+      heading: 'Making and dispatch times',
+      body: [
+        'Made-to-order hoops take 3–10 working days to make before they are dispatched. Ready-made hoops are usually posted within 2 working days.',
+        'Once posted, allow 1–3 working days for delivery. We will email you when your hoop is on its way, with a tracking number where there is one.',
+      ],
+    },
+    {
+      heading: 'Collection in Southampton',
+      body: [
+        'Collection is free. Choose it at checkout and we will email you to arrange a time once your hoop is ready — often at a class.',
+      ],
+    },
+    {
+      heading: 'Postage costs',
+      body: [
+        'The delivery charge is shown at checkout before you pay, and is included in the total.',
+        'Fixed hoops cannot be folded, so they travel as a large parcel. Collapsible hoops pack down and are cheaper to send.',
+      ],
+    },
+    {
+      heading: 'If something goes wrong',
+      body: [
+        'If your hoop has not arrived when it should have, email hello@flowsha.co.uk and we will chase the courier.',
+        'If it arrives damaged, photograph the packaging and the hoop and send them to us. We will replace or refund it.',
       ],
     },
   ],

@@ -8,14 +8,11 @@
 // If neither is set, protection is OFF and submissions pass through — so the dev
 // Lambda works with no config. Production MUST have the SSM parameter.
 
-import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
+import { loadSecret } from './secrets.js';
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const DIRECT_SECRET = process.env.TURNSTILE_SECRET_KEY || '';
 const SECRET_PARAM = process.env.TURNSTILE_SECRET_PARAM || '';
-
-let cachedSecret: string | undefined; // persists across warm invocations
-let ssmClient: SSMClient | undefined;
 
 export function isTurnstileEnabled(): boolean {
   return DIRECT_SECRET !== '' || SECRET_PARAM !== '';
@@ -23,15 +20,7 @@ export function isTurnstileEnabled(): boolean {
 
 /** Resolve the secret, fetching+caching from SSM on first use when configured. */
 async function getSecret(): Promise<string> {
-  if (DIRECT_SECRET) return DIRECT_SECRET;
-  if (cachedSecret !== undefined) return cachedSecret;
-
-  ssmClient ??= new SSMClient({ region: process.env.AWS_REGION });
-  const res = await ssmClient.send(
-    new GetParameterCommand({ Name: SECRET_PARAM, WithDecryption: true }),
-  );
-  cachedSecret = res.Parameter?.Value ?? '';
-  return cachedSecret;
+  return loadSecret(DIRECT_SECRET, SECRET_PARAM);
 }
 
 interface SiteverifyResponse {

@@ -7,12 +7,12 @@ need to do. Architecture/conventions live in [CLAUDE.md](./CLAUDE.md).
 
 ## AWS account & access
 
-| | |
-| --- | --- |
-| **Account** | `616853831644` (dedicated Flowsha account in the org — **not** any work account) |
-| **Login** | IAM Identity Center (SSO). Portal: <https://d-99674bc0ba.awsapps.com/start> |
-| **CLI profile** | `flowsha` — **prefix every AWS/CDK command with `AWS_PROFILE=flowsha`** |
-| **Region** | `eu-west-2` (London). CloudFront ACM cert is in `us-east-1` (required). |
+|                 |                                                                                  |
+| --------------- | -------------------------------------------------------------------------------- |
+| **Account**     | `616853831644` (dedicated Flowsha account in the org — **not** any work account) |
+| **Login**       | IAM Identity Center (SSO). Portal: <https://d-99674bc0ba.awsapps.com/start>      |
+| **CLI profile** | `flowsha` — **prefix every AWS/CDK command with `AWS_PROFILE=flowsha`**          |
+| **Region**      | `eu-west-2` (London). CloudFront ACM cert is in `us-east-1` (required).          |
 
 The SSO token expires (re-auth each day/session):
 
@@ -21,23 +21,34 @@ aws sso login --profile flowsha          # opens the browser
 aws sts get-caller-identity --profile flowsha   # should show account 616853831644
 ```
 
-If the SSO *session* itself has lapsed, re-run `aws configure sso --profile flowsha`.
+If the SSO _session_ itself has lapsed, re-run `aws configure sso --profile flowsha`.
 
 ## Deployed resources (`FlowshaHoopsStack`)
 
-| Resource | Value |
-| --- | --- |
-| S3 site bucket | `flowsha.co.uk-site` (private; CloudFront OAC only) |
-| CloudFront | `d18yhmfqqkhedc.cloudfront.net` · distribution `E3VZCH84OH2M69` |
-| Custom domain | `flowsha.co.uk` + `www.flowsha.co.uk` (A/AAAA alias → CloudFront) |
-| ACM cert (us-east-1) | `arn:aws:acm:us-east-1:616853831644:certificate/17f21f31-1d36-465e-85fe-a5a13064bdab` |
-| Contact Lambda | `flowsha-contact` (Node 20, ARM64) |
-| Function URL | `https://nnvpku3nf5prtb4zgxvcgbt2ey0qzhjr.lambda-url.eu-west-2.on.aws/` |
-| Route 53 hosted zone | `Z1025669GIFEEZTK76FJ` (domain registered in Route 53, this account) |
-| GitHub OIDC deploy role | `arn:aws:iam::616853831644:role/GitHubActionsDeployRole` |
+| Resource                | Value                                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| S3 site bucket          | `flowsha.co.uk-site` (private; CloudFront OAC only)                                                            |
+| CloudFront              | `d18yhmfqqkhedc.cloudfront.net` · distribution `E3VZCH84OH2M69`                                                |
+| Custom domain           | `flowsha.co.uk` + `www.flowsha.co.uk` (A/AAAA alias → CloudFront)                                              |
+| ACM cert (us-east-1)    | `arn:aws:acm:us-east-1:616853831644:certificate/17f21f31-1d36-465e-85fe-a5a13064bdab`                          |
+| API Lambda              | `flowsha-contact` (Node 22, ARM64, 512 MB, 15 s)                                                               |
+| Function URL            | `https://nnvpku3nf5prtb4zgxvcgbt2ey0qzhjr.lambda-url.eu-west-2.on.aws/`                                        |
+| DynamoDB                | `flowsha-feedback` · `flowsha-waiver` · `flowsha-products` · `flowsha-orders` (all PK `id`, on-demand, RETAIN) |
+| S3 media bucket         | `flowsha.co.uk-media` (product photos; served via the `/media/*` CloudFront behaviour)                         |
+| Route 53 hosted zone    | `Z1025669GIFEEZTK76FJ` (domain registered in Route 53, this account)                                           |
+| GitHub OIDC deploy role | `arn:aws:iam::616853831644:role/GitHubActionsDeployRole`                                                       |
 
 > The Function URL ends in `/`; the frontend strips the trailing slash before appending
 > `/contact` (a `//contact` path 404s). Keep `CONTACT_API_URL` **without** a trailing slash.
+
+> ⚠️ **The media bucket must never be synced by `deploy.yml`.** That workflow runs
+> `aws s3 sync --delete` against the _site_ bucket; pointing it at the media bucket, or
+> moving photos into the site bucket, would delete every product photo on each release.
+
+> ⚠️ **CI cannot create infrastructure.** `GitHubActionsDeployRole` holds only
+> `lambda:UpdateFunctionCode`, S3 read/write on the site bucket, and
+> `cloudfront:CreateInvalidation`. Any new table, bucket or SSM parameter needs a local
+> `AWS_PROFILE=flowsha npx cdk deploy` **before** you push the release tag.
 
 ## CI/CD — automated deploy
 
@@ -79,6 +90,47 @@ aws ssm put-parameter --profile flowsha --region eu-west-2 \
 (dev only) is set, verification is skipped and submissions pass through — so the local dev
 Lambda works with no config. Production protection is only as live as that SSM parameter.
 
+**Checkout uses a second, different site key.** Whether a Turnstile widget is an invisible
+check or a visible checkbox is a property of the _site key_, set in the Cloudflare
+dashboard — not a render option. Create a second **Managed** widget for checkout and set
+its site key as the GitHub Actions variable `TURNSTILE_CHECKOUT_SITE_KEY`
+(→ `NEXT_PUBLIC_TURNSTILE_CHECKOUT_SITE_KEY`). Both keys share the one secret above.
+
+## Stripe (shop payments)
+
+Hosted Stripe Checkout: the customer is redirected to Stripe, so no card data touches
+this site (SAQ-A). The Lambda talks to Stripe's REST API over `fetch` — there is no
+`stripe` npm dependency to keep updated.
+
+Two SSM SecureStrings in `eu-west-2`, created out of band exactly like the Turnstile
+secret. CDK only references the names and grants `ssm:GetParameter` on them.
+
+```bash
+# Secret key: Stripe dashboard → Developers → API keys.
+aws ssm put-parameter --profile flowsha --region eu-west-2 \
+  --name /flowsha/stripe-secret-key --type SecureString \
+  --value 'sk_live_...' --overwrite
+
+# Webhook signing secret: created when you add the endpoint below.
+aws ssm put-parameter --profile flowsha --region eu-west-2 \
+  --name /flowsha/stripe-webhook-secret --type SecureString \
+  --value 'whsec_...' --overwrite
+```
+
+**Webhook endpoint.** In the Stripe dashboard, add an endpoint pointing at the Function
+URL + `/stripe-webhook`, subscribed to `checkout.session.completed` and
+`checkout.session.expired`. The first marks the order paid and the hoops sold; the
+second releases the reservation. Both are idempotent, so Stripe's retries are safe.
+
+**Fail-safe behaviour:** with no key configured, `POST /checkout` returns a clear 503 and
+the rest of the site is unaffected.
+
+**Payouts:** leave on the default rolling schedule. Standard UK payouts are free — only
+_Instant_ Payouts cost anything (1%, min £1.00).
+
+**Before going live:** upload the logo and set brand colours in the Stripe dashboard, so
+the payment page doesn't look like a different company.
+
 **Cut a release:**
 
 ```bash
@@ -117,6 +169,7 @@ It does not touch production.
 
   On the Basic support plan the case can only be read/answered in the AWS Support Center
   console (the Support API is blocked).
+
 - **What still works in the sandbox:** the **owner notification** (→ verified
   `hello@flowsha.co.uk`) delivers normally, so no enquiry is lost. The **only** casualty
   is the customer auto-reply to unverified visitor addresses.

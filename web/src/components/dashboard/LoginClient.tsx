@@ -35,11 +35,7 @@ export default function LoginClient() {
           <SignedOut>
             {/* Hash routing keeps every step on /login/ so the static host never
                 404s on a Clerk sub-path. */}
-            <SignIn
-              routing="hash"
-              fallbackRedirectUrl="/dashboard/"
-              appearance={clerkAppearance}
-            />
+            <SignIn routing="hash" fallbackRedirectUrl="/dashboard/" appearance={clerkAppearance} />
           </SignedOut>
         </>
       )}

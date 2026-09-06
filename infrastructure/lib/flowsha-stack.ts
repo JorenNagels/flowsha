@@ -16,6 +16,10 @@ const SES_REGION = process.env.AWS_SES_REGION || 'eu-west-2';
 // SSM SecureString holding the Cloudflare Turnstile secret key. Created once,
 // out of band (see DEPLOYMENT.md) — never committed. The Lambda reads it at runtime.
 const TURNSTILE_SECRET_PARAM = '/flowsha/turnstile-secret';
+// SSM SecureStrings holding the Stripe keys. Created once, out of band (see
+// DEPLOYMENT.md) — never committed. Same pattern as TURNSTILE_SECRET_PARAM.
+const STRIPE_SECRET_PARAM = '/flowsha/stripe-secret-key';
+const STRIPE_WEBHOOK_SECRET_PARAM = '/flowsha/stripe-webhook-secret';
 // Clerk instance issuer for verifying dashboard session JWTs (public config, no
 // secret). Set at deploy: `CLERK_ISSUER=https://<slug>.clerk.accounts.dev`.
 // Empty = dashboard auth disabled (GET /feedback always 401).
@@ -31,6 +35,18 @@ const CLOUDFRONT_CERT_ARN =
 export class FlowshaStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // CLERK_ISSUER comes from the deployer's shell, so a plain `cdk deploy`
+    // without it exported silently ships '' and disables dashboard auth —
+    // every authenticated route then 401s. Fail the synth instead of finding
+    // out in production. Override with `-c allowNoClerkIssuer=true`.
+    if (!CLERK_ISSUER && !this.node.tryGetContext('allowNoClerkIssuer')) {
+      cdk.Annotations.of(this).addError(
+        'CLERK_ISSUER is not set — deploying now would disable dashboard auth. ' +
+          'Export CLERK_ISSUER=https://clerk.flowsha.co.uk (see DEPLOYMENT.md), ' +
+          'or pass -c allowNoClerkIssuer=true to deploy without it deliberately.',
+      );
+    }
 
     // --- DynamoDB table for hidden client-feedback survey submissions. ---
     //     On-demand billing (rounds to $0 at this volume; 25 GB storage is
@@ -51,20 +67,71 @@ export class FlowshaStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    // --- DynamoDB table for ready-made hoops (the dashboard-managed catalogue). ---
+    //     Small (a handful of one-off hoops), so a Scan is fine — same as the
+    //     tables above. Reservation state lives on the item itself and is moved
+    //     only by conditional writes; see lambda/src/lib/shopDb.ts.
+    const productsTable = new dynamodb.Table(this, 'ProductsTable', {
+      tableName: 'flowsha-products',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // --- DynamoDB table for orders. ---
+    //     The partition key is the Stripe Checkout Session id, which makes the
+    //     webhook idempotent for free: a replayed event hits the same item and
+    //     its conditional update simply no-ops.
+    const ordersTable = new dynamodb.Table(this, 'OrdersTable', {
+      tableName: 'flowsha-orders',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    // --- S3 bucket for product photos, uploaded from the dashboard. ---
+    //     DELIBERATELY SEPARATE from SiteBucket: deploy.yml runs
+    //     `aws s3 sync --delete` against the site bucket on every release, which
+    //     would wipe every product photo. Served via the /media/* CloudFront
+    //     behaviour below.
+    const mediaBucket = new s3.Bucket(this, 'MediaBucket', {
+      bucketName: `${SITE_DOMAIN}-media`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      // The dashboard uploads straight to S3 with a presigned PUT, which is a
+      // cross-origin request from the browser and needs this to succeed.
+      cors: [
+        {
+          allowedOrigins: [
+            `https://${SITE_DOMAIN}`,
+            `https://www.${SITE_DOMAIN}`,
+            'http://localhost:3000',
+          ],
+          allowedMethods: [s3.HttpMethods.PUT],
+          allowedHeaders: ['*'],
+          maxAge: 3000,
+        },
+      ],
+    });
+
     // --- Contact-form Lambda (SES email). Built by `npm run build -w lambda`. ---
     const handlerFn = new lambda.Function(this, 'ContactApi', {
       functionName: 'flowsha-contact',
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       handler: 'handler.handler',
       code: lambda.Code.fromAsset('../lambda/dist/handler'),
-      memorySize: 256,
-      timeout: cdk.Duration.seconds(10),
+      // 512 MB gets proportionally more CPU, so the handler finishes sooner and
+      // often costs *less* per invocation than 256 MB. 15 s leaves room for the
+      // Stripe API round-trip on a cold start.
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(15),
       environment: {
         TO_EMAIL,
         FROM_EMAIL,
         AWS_SES_REGION: SES_REGION,
-        ALLOWED_ORIGIN: `https://${SITE_DOMAIN}`,
+        // Used to build Stripe Checkout success/cancel redirect URLs.
+        SITE_URL: `https://${SITE_DOMAIN}`,
         // Cloudflare Turnstile: the Lambda reads this SSM SecureString at runtime.
         // Create it once (never in code): see DEPLOYMENT.md. No per-deploy env needed.
         TURNSTILE_SECRET_PARAM: TURNSTILE_SECRET_PARAM,
@@ -75,6 +142,14 @@ export class FlowshaStack extends cdk.Stack {
         // Clerk auth for the private dashboard's authenticated GET /feedback.
         CLERK_ISSUER,
         DASHBOARD_ALLOWED_EMAILS,
+        // --- Shop ---
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+        ORDERS_TABLE_NAME: ordersTable.tableName,
+        MEDIA_BUCKET_NAME: mediaBucket.bucketName,
+        // Public URL prefix for uploaded photos, served off the same distribution.
+        MEDIA_BASE_URL: `https://${SITE_DOMAIN}/media`,
+        STRIPE_SECRET_PARAM,
+        STRIPE_WEBHOOK_SECRET_PARAM,
       },
     });
 
@@ -93,12 +168,22 @@ export class FlowshaStack extends cdk.Stack {
     //     authenticated dashboard (GET /waiver). ---
     waiverTable.grantReadWriteData(handlerFn);
 
+    // --- Shop: read/write the catalogue and orders. ---
+    productsTable.grantReadWriteData(handlerFn);
+    ordersTable.grantReadWriteData(handlerFn);
+
+    // --- Shop: sign presigned PUTs for dashboard photo uploads. ---
+    mediaBucket.grantPut(handlerFn);
+    mediaBucket.grantDelete(handlerFn);
+
     // --- Read the Turnstile secret (SSM SecureString) at runtime. ---
     handlerFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ssm:GetParameter'],
         resources: [
           `arn:aws:ssm:${this.region}:${this.account}:parameter${TURNSTILE_SECRET_PARAM}`,
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${STRIPE_SECRET_PARAM}`,
+          `arn:aws:ssm:${this.region}:${this.account}:parameter${STRIPE_WEBHOOK_SECRET_PARAM}`,
         ],
       }),
     );
@@ -120,8 +205,9 @@ export class FlowshaStack extends cdk.Stack {
           `https://www.${SITE_DOMAIN}`,
           'http://localhost:3000',
         ],
-        // POST for the forms; GET for the dashboard's authenticated read.
-        allowedMethods: [lambda.HttpMethod.POST, lambda.HttpMethod.GET],
+        // POST for the forms + checkout; GET for authenticated reads; PATCH for
+        // the dashboard's order/product mutations.
+        allowedMethods: [lambda.HttpMethod.POST, lambda.HttpMethod.GET, lambda.HttpMethod.PATCH],
         allowedHeaders: ['Content-Type', 'Authorization'],
         maxAge: cdk.Duration.seconds(86400),
       },
@@ -160,6 +246,16 @@ function handler(event) {
           { function: rewriteFn, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST },
         ],
       },
+      // Product photos, from the separate media bucket. Keys are stored with a
+      // `media/` prefix so the path pattern maps straight through. The clean-URL
+      // rewrite function is deliberately NOT attached here — these are real files.
+      additionalBehaviors: {
+        '/media/*': {
+          origin: origins.S3BucketOrigin.withOriginAccessControl(mediaBucket),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        },
+      },
       defaultRootObject: 'index.html',
       errorResponses: [
         { httpStatus: 403, responseHttpStatus: 404, responsePagePath: '/404.html' },
@@ -196,7 +292,9 @@ function handler(event) {
     deployRole.addToPolicy(
       new iam.PolicyStatement({
         actions: ['cloudfront:CreateInvalidation'],
-        resources: [`arn:aws:cloudfront::${this.account}:distribution/${distribution.distributionId}`],
+        resources: [
+          `arn:aws:cloudfront::${this.account}:distribution/${distribution.distributionId}`,
+        ],
       }),
     );
 
@@ -216,6 +314,18 @@ function handler(event) {
     new cdk.CfnOutput(this, 'WaiverTableName', {
       value: waiverTable.tableName,
       description: 'DynamoDB table holding /waiver signed submissions',
+    });
+    new cdk.CfnOutput(this, 'ProductsTableName', {
+      value: productsTable.tableName,
+      description: 'DynamoDB table holding ready-made hoops',
+    });
+    new cdk.CfnOutput(this, 'OrdersTableName', {
+      value: ordersTable.tableName,
+      description: 'DynamoDB table holding shop orders',
+    });
+    new cdk.CfnOutput(this, 'MediaBucketName', {
+      value: mediaBucket.bucketName,
+      description: 'S3 bucket for product photos (NOT synced by deploy.yml)',
     });
     new cdk.CfnOutput(this, 'SiteBucketName', {
       value: siteBucket.bucketName,
